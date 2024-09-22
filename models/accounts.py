@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Date, Integer, String
-from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import mapped_column, relationship
 from dependencies.database import Base
 
 class Account(Base):
@@ -9,3 +9,5 @@ class Account(Base):
     name = Column(String(150), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
     password = Column(String(100), nullable=False)
+
+    listings = relationship("Listing", back_populates="account")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from database import get_db
+from dependencies.database import get_db
 from controllers import conversations as controller
 from schemas import conversations as schema
 from typing import List

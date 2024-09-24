@@ -11,7 +11,7 @@
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <h2 class="text-center">Sign Up</h2>
-                <form method="POST" action="/signup">
+                <form id="submitForm" method="POST" action="/signup">
                     <div class="form-group">
                         <label for="name">Name</label>
                         <input type="text" class="form-control" id="name" name="name" placeholder="Enter full name" required>
@@ -30,6 +30,43 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
                 </form>
+
+                <script>
+                document.getElementById("submitForm").addEventListener("submit", function(event) {
+                    event.preventDefault();
+
+                    const formData = {
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    };
+
+                    console.log(formData)
+
+                    fetch('http://127.0.0.1:8000/accounts', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data);
+                        alert('Form submitted successfully: ' + data.message);
+                    })
+                    .catch(error => {
+                        console.error('There was a problem with the fetch operation:', error);
+                        alert('Form submission failed.');
+                    });
+                });
+                </script>
+
                 <p class="text-center mt-3">Already have an account? <a href="/login">Login here</a></p>
             </div>
         </div>

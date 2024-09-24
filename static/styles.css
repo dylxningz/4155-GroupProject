@@ -1,0 +1,131 @@
+/* Most CSS is done in accordance with the University Style Guide:
+    https://brand.charlotte.edu/
+*/
+
+:root{
+    /* Charlotte Green */
+    --primary-green: #005035;
+
+    /* Niner Gold */
+    --secondary-gold: #A49665;
+
+    /* Quartz White */
+    --tertiary-white: #FFFFFF;
+}
+
+body{
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 7.5% 1fr 7.5%;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+    grid-template-areas: 
+        "header header header"
+        "laside body raside"
+        "footer footer footer";
+}
+
+header{
+    grid-area: header;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    padding: 10px;
+    background-color: var(--primary-green);
+    margin: 0;
+    font-family: helvetica;
+    font-weight: bold;
+    background-size: auto;
+    padding-top: 0;
+    padding-bottom: 0;
+    z-index: 2;
+}
+
+header img{
+    position: absolute;
+    top: 5px;
+    left: 10px;
+    z-index: -1;
+}
+
+header h1, h2{
+    position: relative;
+    z-index: 1;
+    color: var(--secondary-gold);
+    text-align: center;
+    font-weight: bolder;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+header h1{
+    padding-top: 50px;
+    padding-bottom: 50px;
+}
+
+
+header nav{
+    justify-items: center;
+}
+
+header nav ul{
+    padding: 0;
+    list-style-type: none;
+    text-align: center;
+    display: flex;
+    align-content: left;
+    margin-top: 10px;   
+    margin-bottom: 10px; 
+}
+
+header nav ul li{
+    flex: 1;
+    border-radius: 10px;
+}
+
+header nav ul li a:hover{
+    background-color: var(--secondary-gold);
+}
+
+header nav ul li a{
+    color: var(--tertiary-white);
+    text-decoration: none;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-radius: 10px;
+}
+
+
+/* INFO PORTION OF EACH PAGE */
+main{grid-area:body;}
+
+/* grid-area: body; */
+.dashboard-main{
+    grid-area: body;
+}
+
+.userProfile-main{
+    grid-area: body;
+}
+
+.settings-main{
+    grid-area: body;
+}
+
+/* FOOTER STYLES */
+footer{
+    grid-area: footer;
+    background-color: var(--primary-color);
+}
+
+footer p{
+    color: var(--tertiary-white);
+    text-align: center;
+    font-weight: bolder;
+    margin-top: 10px;
+}

@@ -17,5 +17,20 @@ def login():
 def signup():
     return render_template('signup.html')
 
+# Route for user dashboard
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+# Route for user profile
+@app.route('/userProfile')
+def userProfile():
+    return render_template('userProfile.html')
+
+# Route for user settings
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

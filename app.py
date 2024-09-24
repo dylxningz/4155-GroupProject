@@ -19,9 +19,7 @@ def signup():
 
 @app.route('/api/signup', methods=['POST'])
 def user_signup():
-    data=request.get_json()
-
-
+    pass
 
 if __name__ == '__main__':
     app.run(debug=True)

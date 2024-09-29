@@ -41,5 +41,13 @@ def user_signup():
 def user_login():
     pass
 
+@app.route('/items')
+def items():
+    return render_template('items.html')
+
+@app.route('/item')
+def item():
+    return render_template('item.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

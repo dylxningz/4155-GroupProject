@@ -54,7 +54,6 @@ def add_message(db: Session, request: schema.MessageCreate):
 
     return new_message
 
-
 def mark_as_read(db: Session, conversation_id: int, user_id: int):
     try:
         messages = db.query(model.Message).filter(
@@ -72,3 +71,25 @@ def mark_as_read(db: Session, conversation_id: int, user_id: int):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     return {"message": "Messages marked as read"}
+def get_conversation(db: Session, conversation_id: int):
+    return db.query(model.Conversation).filter(model.Conversation.id == conversation_id).first()
+
+def delete_conversation(db: Session, conversation_id: int):
+    conversation = db.query(model.Conversation).filter(model.Conversation.id == conversation_id).first()
+    if not conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found.")
+    
+    db.delete(conversation)
+    db.commit()
+    return {"detail": "Conversation deleted successfully."}
+
+def get_message(db: Session, message_id: int):
+    return db.query(model.Message).filter(model.Message.id == message_id).first()
+
+def delete_message(db: Session, message_id: int):
+    message = db.query(model.Message).filter(model.Message.id == message_id).first()
+    if not message:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found.")
+    db.delete(message)
+    db.commit()
+    return {"detail": "Message deleted successfully."}

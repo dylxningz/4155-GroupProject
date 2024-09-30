@@ -11,8 +11,7 @@ class Conversation(Base):
     participant_2 = Column(Integer, ForeignKey("accounts.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    messages = relationship("Message", back_populates="conversation")
-
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete")
 
 class Message(Base):
     __tablename__ = 'messages'

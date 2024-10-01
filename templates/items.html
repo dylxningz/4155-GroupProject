@@ -3,54 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Items for Sale</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Items List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Items for Sale</h1>
-<!-- Just a basic setup, this will need to be integrated into listing in the db to pull from -->
-        <div class="row">
-            <!-- Item 1 -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Item Name 1</h5>
-                        <p class="card-text">Description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                        <p class="card-text"><strong>Price:</strong> $100</p>
-                        <a href="/item" class="btn btn-primary">View Details</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Item 2 -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Item Name 2</h5>
-                        <p class="card-text">Description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                        <p class="card-text"><strong>Price:</strong> $200</p>
-                        <a href="/item" class="btn btn-primary">View Details</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Item 3 -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Item Name 3</h5>
-                        <p class="card-text">Description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                        <p class="card-text"><strong>Price:</strong> $300</p>
-                        <a href="item.html" class="btn btn-primary">View Details</a>
-                    </div>
-                </div>
-            </div>
+        <h1>Items List</h1>
+        <div class="row" id="items-list">
+            <!-- Items will be dynamically inserted here -->
         </div>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch items from the API
+        fetch('/listings')
+        .then(response => response.json())
+        .then(data => {
+            const itemsList = document.getElementById('items-list');
+            data.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('col-md-4', 'mb-3');
+                itemDiv.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${item.title}</h5>
+                            <p class="card-text">${item.description}</p>
+                            <p class="card-text">$${item.price}</p>
+                            <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                `;
+                itemsList.appendChild(itemDiv);
+            });
+        })
+        .catch(error => console.error('Error fetching items:', error));
+    </script>
 </body>
 </html>

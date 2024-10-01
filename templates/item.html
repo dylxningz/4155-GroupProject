@@ -3,31 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Item Details</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Item Detail</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
-
-<!-- this is just a basic page but will need to dynamically load info from said item -->
 <body>
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Item Name 1 Details</h1>
-
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Item Name 1</h5>
-                <p class="card-text"><strong>Description:</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                <p class="card-text"><strong>Price:</strong> $100</p>
-
-                <!-- Optional image -->
-                <img src="placeholder-image.png" class="img-fluid mt-3 mb-3" alt="Item Image">
-
-                <a href="items.html" class="btn btn-secondary">Back to Items</a>
-            </div>
-        </div>
+        <h1 id="item-title">Item Title</h1>
+        <p id="item-description">Item description</p>
+        <p id="item-price">Price: $<span id="item-price-value"></span></p>
+        <a href="/items" class="btn btn-secondary">Back to Items List</a>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = window.location.pathname.split('/').pop();
+
+        // Fetch item details based on ID
+        fetch(`/listings/${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('item-title').textContent = data.title;
+            document.getElementById('item-description').textContent = data.description;
+            document.getElementById('item-price-value').textContent = data.price;
+        })
+        .catch(error => console.error('Error fetching item details:', error));
+    </script>
 </body>
 </html>

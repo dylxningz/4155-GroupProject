@@ -95,6 +95,34 @@ def get_listings():
     response = requests.get('http://127.0.0.1:8000/listings')
     return jsonify(response.json())
 
+@app.route('/create-item', methods=['GET', 'POST'])
+def create_item():
+    if request.method == 'POST':
+        # Extract form data
+        title = request.form.get('title')
+        description = request.form.get('description')
+        price = request.form.get('price')
+
+        # Prepare the data to be sent to FastAPI
+        formData = {
+            'title': title,
+            'description': description,
+            'price': float(price),
+            'user_id': 1  # Replace with actual user ID
+        }
+
+        # Send the data to FastAPI's /listings endpoint
+        response = requests.post('http://127.0.0.1:8000/listings', json=formData)
+
+        if response.status_code == 201:
+            flash('Listing created successfully!', 'success')
+            return redirect(url_for('items'))  # Redirect to the items page
+        else:
+            flash('Failed to create listing. Please try again.', 'danger')
+
+    return render_template('itemcreate.html')
+
+
 # Route for rendering the item detail page
 @app.route('/item/<int:item_id>')
 def item_detail(item_id):

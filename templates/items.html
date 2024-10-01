@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Items List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Items List</h1>
+        <div class="row" id="items-list">
+            <!-- Items will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Fetch items from the API
+        fetch('/listings')
+        .then(response => response.json())
+        .then(data => {
+            const itemsList = document.getElementById('items-list');
+            data.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('col-md-4', 'mb-3');
+                itemDiv.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${item.title}</h5>
+                            <p class="card-text">${item.description}</p>
+                            <p class="card-text">$${item.price}</p>
+                            <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                `;
+                itemsList.appendChild(itemDiv);
+            });
+        })
+        .catch(error => console.error('Error fetching items:', error));
+    </script>
+</body>
+</html>

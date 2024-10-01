@@ -11,7 +11,7 @@
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <h2 class="text-center">Login</h2>
-                <form id="loginForm" method="GET" action="/login">
+                <form id="loginForm" method="POST">
                     <div class="form-group">
                         <label for="email">Email address</label>
                         <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
@@ -22,56 +22,45 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Login</button>
                 </form>
+
                 <script>
                     document.getElementById("loginForm").addEventListener("submit", function(event) {
-                        event.preventDefault();
+                        event.preventDefault(); // Prevent form from refreshing the page
 
                         const email = document.getElementById('email').value;
                         const password = document.getElementById('password').value;
 
-                        fetch('http://127.0.0.1:8000/accounts', {
-                            method: 'GET',  // Ensure the backend supports GET for this endpoint
+                        // Prepare data for login
+                        const formData = new URLSearchParams();
+                        formData.append("username", email);  // FastAPI expects username instead of email
+                        formData.append("password", password);
+
+                        // Send login data to FastAPI
+                        fetch('http://127.0.0.1:8000/accounts/login', {
+                            method: 'POST',  // Use POST for login
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/x-www-form-urlencoded'
                             },
+                            body: formData
                         })
                         .then(response => {
                             if (!response.ok) {
-                                throw new Error('Network response was not ok');
+                                throw new Error('Invalid credentials');
                             }
                             return response.json();
                         })
                         .then(data => {
-                            console.log("then data received");
-
-                            if (Array.isArray(data)) {
-                                console.log("then data is array");
-                                let userFound = false;  // Track if user is found
-
-                                data.forEach(user => {
-                                    if (email === user.email) {
-                                        userFound = true;  // User found
-                                        console.log("email matches");
-
-                                        if (password === user.password) {
-                                            alert(`User ${email} found, logging in`);  // Use backticks
-                                        } else {
-                                            alert("Incorrect password");
-                                        }
-                                    }
-                                });
-
-                                if (!userFound) {
-                                    alert("User not found");
-                                }
-                            }
+                            // If login is successful, redirect to dashboard
+                            alert('Login successful! Redirecting to dashboard.');
+                            window.location.href = '/dashboard';  // Redirect to dashboard
                         })
                         .catch(error => {
-                            console.error('Error fetching data:', error);
-                            alert('Failed to fetch data');
+                            console.error('Error:', error);
+                            alert('Login failed. Please check your credentials.');
                         });
                     });
                 </script>
+
                 <p class="text-center mt-3">Don't have an account? <a href="/signup">Sign up here</a></p>
             </div>
         </div>

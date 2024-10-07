@@ -1,0 +1,38 @@
+:root {
+    /* Custom Colors */
+    --primary-green: #005035;
+    --secondary-gold: #A49665;
+    --tertiary-white: #FFFFFF;
+}
+
+.navbar-custom {
+    background-color: var(--primary-green);
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .navbar-nav .nav-link {
+    color: var(--tertiary-white);
+}
+
+.navbar-custom .navbar-brand:hover,
+.navbar-custom .navbar-nav .nav-link:hover {
+    color: var(--secondary-gold);
+}
+
+.navbar-custom .navbar-toggler {
+    color: var(--tertiary-white);
+    border-color: var(--tertiary-white);
+}
+
+.navbar-custom .navbar-toggler-icon {
+    background-color: var(--tertiary-white);
+}
+
+/* Add spacing between right-side navbar items */
+.navbar-nav.ml-auto .nav-item {
+    margin-right: 15px;  /* Adjust the spacing here */
+}
+
+.navbar-nav.ml-auto .nav-item:last-child {
+    margin-right: 0;  /* Remove margin for the last item */
+}

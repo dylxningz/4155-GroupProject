@@ -12,7 +12,6 @@ router = APIRouter(
 
 @router.post("/login")
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # Get account by email (username)
     account = controller.get_account_by_email(db, request.username)
     
     if not account or not controller.verify_password(request.password, account.password):
@@ -22,7 +21,8 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    return {"message": "Login successful"}
+    # Return user email or any other user data
+    return {"email": account.email, "message": "Login successful"}
 
 @router.post("/", response_model=schema.Account)
 def create(request: schema.AccountCreate, db: Session = Depends(get_db)):

@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Item Details{% endblock %}
+{% block content %}
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -26,18 +20,18 @@
                 <script>
                     document.getElementById("loginForm").addEventListener("submit", function(event) {
                         event.preventDefault(); // Prevent form from refreshing the page
-
+                
                         const email = document.getElementById('email').value;
                         const password = document.getElementById('password').value;
-
+                
                         // Prepare data for login
                         const formData = new URLSearchParams();
                         formData.append("username", email);  // FastAPI expects username instead of email
                         formData.append("password", password);
-
+                
                         // Send login data to FastAPI
                         fetch('http://127.0.0.1:8000/accounts/login', {
-                            method: 'POST',  // Use POST for login
+                            method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded'
                             },
@@ -50,20 +44,30 @@
                             return response.json();
                         })
                         .then(data => {
-                            // If login is successful, redirect to dashboard
-                            alert('Login successful! Redirecting to dashboard.');
-                            window.location.href = '/dashboard';  // Redirect to dashboard
+                            // Debugging: Log the data received from FastAPI
+                            console.log('FastAPI Response Data:', data);
+                
+                            // If login is successful, set the session in Flask
+                            fetch('/set-session', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ email: data.email })  // Send the email to Flask to set in session
+                            })
+                            .then(() => {
+                                window.location.href = '/dashboard';  // Redirect to dashboard
+                            });
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert('Login failed. Please check your credentials.');
+                            // Instead of alert, redirect back to login and show flash message via Flask
+                            window.location.href = '/login?error=1'; // You can use query parameters to indicate errors
                         });
                     });
                 </script>
-
                 <p class="text-center mt-3">Don't have an account? <a href="/signup">Sign up here</a></p>
             </div>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

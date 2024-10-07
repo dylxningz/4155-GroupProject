@@ -1,9 +1,23 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, get_flashed_messages
 import requests
 from flask import flash, redirect, url_for
 
 app = Flask(__name__)
+app.secret_key = 'supersecretkey' 
 
+@app.route('/set-session', methods=['POST'])
+def set_session():
+    data = request.get_json()
+
+    # Debugging: Check what data is received
+    print(f"Data received: {data}")
+
+    if 'email' not in data:
+        return jsonify({'message': 'Email not provided'}), 400  # Return error if email is missing
+
+    session['email'] = data['email']  # Set the session with the user's email
+    session['username'] = data['email'].split('@')[0]  # Extract username from email
+    return jsonify({'message': 'Session set'}), 200
 # Route for the homepage
 @app.route('/')
 def index():
@@ -16,8 +30,6 @@ def signup():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        print(f"Signup data: name={name}, email={email}, password={password}")  # Debugging
-
         # Make a request to FastAPI's sign-up endpoint
         response = requests.post('http://127.0.0.1:8000/accounts', json={
             'name': name,
@@ -25,16 +37,11 @@ def signup():
             'password': password
         })
 
-        # Debugging: Print the response status and data
-        print(f"Response status: {response.status_code}")
-        print(f"Response text: {response.text}")
-
         if response.status_code == 201:
             flash('Sign-up successful! Please log in.')
-            return redirect(url_for('login'))  # Redirect to login page
+            return redirect(url_for('login'))
         else:
             flash('Sign-up failed. Please try again.')
-            print(f"Error details: {response.json()}")  # Print the error details for debugging
 
     return render_template('signup.html')
 
@@ -44,25 +51,80 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # Send the login data to FastAPI (with plain text password)
+        # Send the login data to FastAPI
         response = requests.post('http://127.0.0.1:8000/accounts/login', data={
             'username': email,
             'password': password
         })
 
         if response.status_code == 200:
-            flash('Login successful!')
-            return redirect(url_for('dashboard'))
+            data = response.json()
+            session['email'] = data['email']
+            session['username'] = email.split('@')[0]  # Username from email
+
+            # Set the flash message before redirecting
+            flash(f"Welcome {session['username']}, you have been successfully logged in.", "success")
+            print("Flash message before redirect:", get_flashed_messages(with_categories=True))  # Debugging
+
+            return redirect(url_for('dashboard'))  # Redirect to the dashboard after login
         else:
-            flash('Login failed. Please check your credentials.')
-            print(f"Error: {response.text}")
+            flash('Login failed: Wrong email and/or password.', 'danger')
+            return redirect(url_for('login'))
 
     return render_template('login.html')
 
-# Route for user dashboard
+@app.route('/logout')
+def logout():
+    # Clear the session
+    session.clear()
+    flash('You have been logged out.')
+    return redirect(url_for('login'))
+
 @app.route('/dashboard')
 def dashboard():
+    messages = get_flashed_messages(with_categories=True)
+    print("Flash messages:", messages)
+    print("Current session data:", session.get('email'), session.get('username'))  # Debugging: Check session data
+    
     return render_template('dashboard.html')
+
+# Route for creating a new item (listing)
+@app.route('/create-item', methods=['GET', 'POST'])
+def create_item():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        price = request.form.get('price')
+
+        # Send data to FastAPI
+        formData = {
+            'title': title,
+            'description': description,
+            'price': float(price),
+            'user_id': 1  # Replace with actual user ID or fetch from session
+        }
+        response = requests.post('http://127.0.0.1:8000/listings', json=formData)
+
+        if response.status_code == 201:
+            flash('Listing created successfully!', 'success')
+            return redirect(url_for('items'))
+        else:
+            flash('Failed to create listing. Please try again.')
+
+    return render_template('itemcreate.html')
+
+# Route for displaying all items (listings)
+@app.route('/items')
+def items():
+    # Fetch listings from FastAPI
+    response = requests.get('http://127.0.0.1:8000/listings')
+    listings = response.json() if response.status_code == 200 else []
+    return render_template('items.html', listings=listings)
+
+# Route for item details
+@app.route('/item/<int:item_id>')
+def item_detail(item_id):
+    return render_template('item.html')
 
 # Route for user profile
 @app.route('/userProfile')
@@ -74,7 +136,6 @@ def userProfile():
 def settings():
     return render_template('settings.html')
 
-
 @app.route('/api/signup', methods=['POST'])
 def user_signup():
     pass
@@ -83,10 +144,7 @@ def user_signup():
 def user_login():
     pass
 
-# Route for rendering the items list page
-@app.route('/items')
-def items():
-    return render_template('items.html')
+
 
 # Route for fetching all listings (to be used by the front-end in items.html)
 @app.route('/listings')
@@ -95,38 +153,7 @@ def get_listings():
     response = requests.get('http://127.0.0.1:8000/listings')
     return jsonify(response.json())
 
-@app.route('/create-item', methods=['GET', 'POST'])
-def create_item():
-    if request.method == 'POST':
-        # Extract form data
-        title = request.form.get('title')
-        description = request.form.get('description')
-        price = request.form.get('price')
 
-        # Prepare the data to be sent to FastAPI
-        formData = {
-            'title': title,
-            'description': description,
-            'price': float(price),
-            'user_id': 1  # Replace with actual user ID
-        }
-
-        # Send the data to FastAPI's /listings endpoint
-        response = requests.post('http://127.0.0.1:8000/listings', json=formData)
-
-        if response.status_code == 201:
-            flash('Listing created successfully!', 'success')
-            return redirect(url_for('items'))  # Redirect to the items page
-        else:
-            flash('Failed to create listing. Please try again.', 'danger')
-
-    return render_template('itemcreate.html')
-
-
-# Route for rendering the item detail page
-@app.route('/item/<int:item_id>')
-def item_detail(item_id):
-    return render_template('item.html')
 
 # Route for fetching a single listing by ID (to be used by the front-end in item.html)
 @app.route('/listings/<int:item_id>')

@@ -30,7 +30,6 @@ def signup():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # Make a request to FastAPI's sign-up endpoint
         response = requests.post('http://127.0.0.1:8000/accounts', json={
             'name': name,
             'email': email,
@@ -66,7 +65,7 @@ def login():
             flash(f"Welcome {session['username']}, you have been successfully logged in.", "success")
             print("Flash message before redirect:", get_flashed_messages(with_categories=True))  # Debugging
 
-            return redirect(url_for('dashboard'))  # Redirect to the dashboard after login
+            return redirect(url_for('dashboard'))  
         else:
             flash('Login failed: Wrong email and/or password.', 'danger')
             return redirect(url_for('login'))

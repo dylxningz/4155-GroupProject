@@ -28,11 +28,10 @@
     background-color: var(--tertiary-white);
 }
 
-/* Add spacing between right-side navbar items */
 .navbar-nav.ml-auto .nav-item {
-    margin-right: 15px;  /* Adjust the spacing here */
+    margin-right: 15px;  
 }
 
 .navbar-nav.ml-auto .nav-item:last-child {
-    margin-right: 0;  /* Remove margin for the last item */
+    margin-right: 0; 
 }

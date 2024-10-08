@@ -7,21 +7,38 @@ app.secret_key = 'supersecretkey'
 
 @app.route('/set-session', methods=['POST'])
 def set_session():
-    data = request.get_json()
+    data = request.json
 
-    # Debugging: Check what data is received
-    print(f"Data received: {data}")
+    if 'id' in data and 'email' in data and 'name' in data:
+        session['id'] = data['id']  
+        session['email'] = data['email']  
+        session['name'] = data['name'] 
+        session['username'] = data['email'].split('@')[0] 
 
-    if 'email' not in data:
-        return jsonify({'message': 'Email not provided'}), 400  # Return error if email is missing
-
-    session['email'] = data['email']  # Set the session with the user's email
-    session['username'] = data['email'].split('@')[0]  # Extract username from email
-    return jsonify({'message': 'Session set'}), 200
+        print(f"Session data set: id={session['id']}, name={session['name']}, email={session['email']}")
+        return jsonify({"message": "Session data set successfully"})
+    else:
+        print(f"Error: 'id', 'email', or 'name' not found in session data")
+        return jsonify({"error": "Missing session data"}), 400
+    
+@app.route('/get-session', methods=['GET'])
+def get_session():
+    if 'id' in session:  
+        return jsonify({
+            "id": session['id'],  
+            "email": session['email']  
+        })
+    else:
+        return jsonify({"error": "No user session found"}), 400
 # Route for the homepage
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/test-session')
+def test_session():
+    return jsonify(dict(session))
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -47,10 +64,10 @@ def signup():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        session.clear()  
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # Send the login data to FastAPI
         response = requests.post('http://127.0.0.1:8000/accounts/login', data={
             'username': email,
             'password': password
@@ -59,13 +76,14 @@ def login():
         if response.status_code == 200:
             data = response.json()
             session['email'] = data['email']
-            session['username'] = email.split('@')[0]  # Username from email
-
-            # Set the flash message before redirecting
+            session['name'] = data['name']
+            session['id'] = data['id']
+            session['username'] = email.split('@')[0]
+            
+            print(f"Session after login: {dict(session)}")
+            
             flash(f"Welcome {session['username']}, you have been successfully logged in.", "success")
-            print("Flash message before redirect:", get_flashed_messages(with_categories=True))  # Debugging
-
-            return redirect(url_for('dashboard'))  
+            return redirect(url_for('dashboard'))
         else:
             flash('Login failed: Wrong email and/or password.', 'danger')
             return redirect(url_for('login'))
@@ -74,7 +92,6 @@ def login():
 
 @app.route('/logout')
 def logout():
-    # Clear the session
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('login'))
@@ -82,10 +99,8 @@ def logout():
 @app.route('/dashboard')
 def dashboard():
     messages = get_flashed_messages(with_categories=True)
-    print("Flash messages:", messages)
-    print("Current session data:", session.get('email'), session.get('username'))  # Debugging: Check session data
     
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', user_id=session.get('id'))
 
 # Route for creating a new item (listing)
 @app.route('/create-item', methods=['GET', 'POST'])
@@ -94,23 +109,70 @@ def create_item():
         title = request.form.get('title')
         description = request.form.get('description')
         price = request.form.get('price')
+        user_id = session.get('id')
 
-        # Send data to FastAPI
+        if not user_id:
+            flash('You need to be logged in to create a listing.', 'danger')
+            return redirect(url_for('login'))
+
         formData = {
             'title': title,
             'description': description,
             'price': float(price),
-            'user_id': 1  # Replace with actual user ID or fetch from session
+            'user_id': user_id
         }
+
         response = requests.post('http://127.0.0.1:8000/listings', json=formData)
 
         if response.status_code == 201:
             flash('Listing created successfully!', 'success')
             return redirect(url_for('items'))
         else:
-            flash('Failed to create listing. Please try again.')
+            flash('Failed to create listing. Please try again.', 'danger')
+            print(f"Error from FastAPI: {response.json()}")  # Debugging
 
     return render_template('itemcreate.html')
+
+@app.route('/edit-item/<int:item_id>', methods=['GET', 'POST'])
+def edit_item(item_id):
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        price = request.form.get('price')
+
+        # Update the item with the new data
+        formData = {
+            'title': title,
+            'description': description,
+            'price': float(price)
+        }
+
+        response = requests.put(f'http://127.0.0.1:8000/listings/{item_id}', json=formData)
+
+        if response.status_code == 200:
+            flash('Item updated successfully!', 'success')
+            return redirect(url_for('items'))
+        else:
+            flash('Failed to update item. Please try again.', 'danger')
+
+    response = requests.get(f'http://127.0.0.1:8000/listings/{item_id}')
+    if response.status_code == 200:
+        item = response.json()
+        return render_template('itemedit.html', item=item)
+    else:
+        flash('Item not found.', 'danger')
+        return redirect(url_for('items'))
+
+@app.route('/delete-item/<int:item_id>', methods=['POST'])
+def delete_item(item_id):
+    response = requests.delete(f'http://127.0.0.1:8000/listings/{item_id}')
+    if response.status_code == 204:
+        flash('Item deleted successfully!', 'success')
+    else:
+        flash('Failed to delete item. Please try again.', 'danger')
+
+    return redirect(url_for('items'))
+
 
 # Route for displaying all items (listings)
 @app.route('/items')

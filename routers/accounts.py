@@ -12,17 +12,21 @@ router = APIRouter(
 
 @router.post("/login")
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Get account by email
     account = controller.get_account_by_email(db, request.username)
-    
+
     if not account or not controller.verify_password(request.password, account.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    # Return user email or any other user data
-    return {"email": account.email, "message": "Login successful"}
+
+    # Debugging: Print account details
+    print(f"Authenticated user: id={account.id}, name={account.name}, email={account.email}")
+
+    # Return id, name, and email
+    return {"id": account.id, "name": account.name, "email": account.email}
 
 @router.post("/", response_model=schema.Account)
 def create(request: schema.AccountCreate, db: Session = Depends(get_db)):

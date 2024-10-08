@@ -1,15 +1,108 @@
-
 {% extends 'base.html' %}
-{% block title %}Item Details{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
-    <div class="dashboard-main">
-        <h4>CONTENT WILL BE ADDED</h4>
-        <div class="user-listings">
-
+    <div class="dashboard-main container mt-5">
+        <!-- Greeting Section -->
+        <div class="greeting-box mb-4">
+            <h3 id="greeting">Good day, {{ session['name'] }}!</h3>
         </div>
-        <div class="watched-listings">
-        
+
+        <!-- User Listings Section -->
+        <div class="glass-box">
+            <h4>Your Listed Items</h4>
+            <div class="row" id="user-items">
+                <p id="no-items-message" class="no-items-message">You have not listed any items yet.</p>
+            </div>
+        </div>
+
+        <!-- Watched Listings Section -->
+        <div class="glass-box">
+            <h4>Watched Items</h4>
+            <div class="watched-box">
+                <p>No watched items yet.</p>
+            </div>
         </div>
     </div>
 
+    <style>
+        /* Apply green color to the card text to match the box color */
+        .card {
+            background-color: rgba(255, 255, 255, 0.56); /* Apply the glassy green background */
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: var(--primary-green); /* Use the same green for text */
+        }
+
+        .card-title, .card-text {
+            color: var(--primary-green); /* Set text color to green */
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green); /* Apply green to button */
+            border-color: var(--primary-green);
+        }
+    </style>
+
+    <script>
+        // JavaScript to handle greeting based on time of day
+        const currentHour = new Date().getHours();
+        const greetingText = document.getElementById('greeting');
+        let greeting = "Good day";
+        
+        if (currentHour < 12) {
+            greeting = "Good morning";
+        } else if (currentHour < 18) {
+            greeting = "Good afternoon";
+        } else {
+            greeting = "Good evening";
+        }
+        greetingText.textContent = `${greeting}, {{ session['name'] }}!`;  // Use full name
+
+        // Pass session variables to JavaScript safely
+        const userId = "{{ session['id'] }}";   // Get the user ID from the session
+
+// Fetch the user's listings
+fetch(`http://127.0.0.1:8000/listings/user/${userId}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('No items found or error fetching data');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const userItems = document.getElementById('user-items');
+        const noItemsMessage = document.getElementById('no-items-message');
+
+        // Clear the userItems container before appending new items
+        userItems.innerHTML = '';
+
+        // If no items are found, show the message
+        if (data.length === 0) {
+            noItemsMessage.style.display = 'block';
+        } else {
+            noItemsMessage.style.display = 'none'; // Hide message if there are items
+        }
+
+        // If items are found, display them as cards
+        data.forEach(item => {
+            const itemCard = document.createElement('div');
+            itemCard.classList.add('col-md-4', 'mb-3');
+            itemCard.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">${item.title}</h5>
+                        <p class="card-text">${item.description}</p>
+                        <p class="card-text">$${item.price}</p>
+                        <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            `;
+            userItems.appendChild(itemCard);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching user items:', error);
+        const noItemsMessage = document.getElementById('no-items-message');
+        noItemsMessage.style.display = 'block';  // Show message if there's an error
+    });
+    </script>
 {% endblock %}

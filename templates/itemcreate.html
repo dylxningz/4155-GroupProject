@@ -5,7 +5,7 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <h2 class="text-center">Create a New Listing</h2>
-                <form id="listingForm" method="POST">
+                <form id="listingForm" method="POST" action="/listings">
                     <div class="form-group">
                         <label for="title">Item Title</label>
                         <input type="text" class="form-control" id="title" name="title" placeholder="Enter item title" required>
@@ -29,36 +29,50 @@
                         const description = document.getElementById('description').value;
                         const price = document.getElementById('price').value;
 
-                        // Prepare form data to send to FastAPI
-                        const formData = {
-                            title: title,
-                            description: description,
-                            price: parseFloat(price),
-                            user_id: 1 // Assuming user_id is 1 for now (you should replace this with actual user data)
-                        };
-
-                        // Send listing data to FastAPI
-                        fetch('http://127.0.0.1:8000/listings', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Failed to submit listing');
+                        // Fetch 'id' from the session using Flask's session storage
+                        fetch('/get-session')
+                        .then(response => response.json())
+                        .then(sessionData => {
+                            if (sessionData.error) {
+                                throw new Error(sessionData.error);
                             }
-                            return response.json();
-                        })
-                        .then(data => {
-                            alert('Listing created successfully!');
-                            console.log('Listing created:', data);
-                            window.location.href = '/items';  // Redirect to the list of items (you can customize this)
+
+                            const userId = sessionData.id;  // Extract 'id' from session
+
+                            // Prepare form data to send to FastAPI
+                            const formData = {
+                                title: title,
+                                description: description,
+                                price: parseFloat(price),
+                                user_id: userId  // Set 'user_id' for the listing
+                            };
+
+                            // Send listing data to FastAPI
+                            fetch('http://127.0.0.1:8000/listings', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(formData)
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.json().then(data => { throw new Error(data.detail) });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                alert('Listing created successfully!');
+                                window.location.href = '/items';  // Redirect to the list of items
+                            })
+                            .catch(error => {
+                                console.error('Error from FastAPI:', error);
+                                alert(`Error creating listing: ${error.message}`);
+                            });
                         })
                         .catch(error => {
-                            console.error('Error submitting listing:', error);
-                            alert('Error creating listing. Please try again.');
+                            console.error('Error fetching session data:', error);
+                            alert('Error retrieving user information. Please try again.');
                         });
                     });
                 </script>

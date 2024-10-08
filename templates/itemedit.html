@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Edit Item{% endblock %}
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2 class="text-center">Edit Listing</h2>
+                <form id="editForm" method="POST" action="/edit-item/{{ item.id }}">
+                    <div class="form-group">
+                        <label for="title">Item Title</label>
+                        <input type="text" class="form-control" id="title" name="title" placeholder="Enter item title" required value="{{ item.title }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Item Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter item description" required>{{ item.description }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price ($)</label>
+                        <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="Enter item price" required value="{{ item.price }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Update Listing</button>
+                </form>
+
+                <script>
+                    // Add event listener for the form submit to update the listing
+                    document.getElementById("editForm").addEventListener("submit", function(event) {
+                        event.preventDefault();  // Prevent default form submission
+
+                        const title = document.getElementById('title').value;
+                        const description = document.getElementById('description').value;
+                        const price = document.getElementById('price').value;
+
+                        // Fetch the user id from session
+                        fetch('/get-session')
+                        .then(response => response.json())
+                        .then(sessionData => {
+                            if (sessionData.error) {
+                                throw new Error(sessionData.error);
+                            }
+
+                            const userId = sessionData.id;  // Extract the user ID
+
+                            // Prepare form data for updating the listing
+                            const formData = {
+                                title: title,
+                                description: description,
+                                price: parseFloat(price)
+                            };
+
+                            // Send updated listing data to FastAPI
+                            fetch(`http://127.0.0.1:8000/listings/{{ item.id }}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(formData)
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.json().then(data => { throw new Error(data.detail) });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                // Set a flash message in Flask and redirect to the item detail page
+                                fetch('/set-flash-message', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ message: 'Listing updated successfully!', category: 'success' })
+                                }).then(() => {
+                                    window.location.href = `/item/{{ item.id }}`;  // Redirect to the item details page
+                                });
+                            })
+                            .catch(error => {
+                                // Set an error flash message in Flask
+                                fetch('/set-flash-message', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ message: `Error updating listing: ${error.message}`, category: 'danger' })
+                                }).then(() => {
+                                    window.location.href = `/item/{{ item.id }}`;  // Redirect to the item details page
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error fetching session data:', error);
+                            // Set an error flash message in Flask
+                            fetch('/set-flash-message', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ message: 'Error retrieving user information. Please try again.', category: 'danger' })
+                            }).then(() => {
+                                window.location.href = `/item/{{ item.id }}`;  // Redirect to the item details page
+                            });
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+{% endblock %}

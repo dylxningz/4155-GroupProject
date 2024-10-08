@@ -1,0 +1,240 @@
+:root {
+    /* Custom Colors */
+    --primary-green: #005035;
+    --secondary-gold: #A49665;
+    --tertiary-white: #FFFFFF;
+}
+/* nav bar */
+.navbar-custom {
+    background-color: var(--primary-green);
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .navbar-nav .nav-link {
+    color: var(--tertiary-white);
+}
+
+.navbar-custom .navbar-brand:hover,
+.navbar-custom .navbar-nav .nav-link:hover {
+    color: var(--secondary-gold);
+}
+
+.navbar-custom .navbar-toggler {
+    color: var(--tertiary-white);
+    border-color: var(--tertiary-white);
+}
+
+.navbar-custom .navbar-toggler-icon {
+    background-color: var(--tertiary-white);
+}
+
+.navbar-nav.ml-auto .nav-item {
+    margin-right: 15px;  
+}
+
+.navbar-nav.ml-auto .nav-item:last-child {
+    margin-right: 0; 
+}
+/*prop delete and set for all pages */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+/* home page */
+
+.slideshow-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.slide:first-child {
+    opacity: 1;
+}
+
+.hero-text {
+    position: absolute;
+    z-index: 1;
+    color: white;
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); 
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.61); 
+    border-radius: 10px; 
+    width: 80%; 
+    max-width: 600px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    z-index: 10; 
+}
+
+.hero-text h1, .hero-text p {
+    margin-bottom: 20px;
+}
+
+.hero-text a {
+    margin: 10px;
+}
+
+.hero-text a.btn-primary {
+    background-color: #005035; 
+    border-color: #005035;
+    color: #FFFFFF; 
+}
+.hero-text a.btn-primary:hover {
+    background-color: #004229; 
+    border-color: #004229;
+}
+
+.hero-text a.btn-secondary {
+    background-color: #A49665; 
+    border-color: #A49665;
+    color: #FFFFFF; 
+}
+
+.hero-text a.btn-secondary:hover {
+    background-color: #8B7A4D; 
+    border-color: #8B7A4D;
+}
+/* login page */
+.login-container {
+    background-color: rgba(255, 255, 255, 0.9);  
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); 
+    margin-top: 30px;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-green); 
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.login-btn {
+    background-color: var(--primary-green); 
+    color: var(--tertiary-white); 
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+}
+
+.login-btn:hover {
+    background-color: var(--secondary-gold);
+}
+
+.form-control {
+    margin-bottom: 15px;
+}
+
+
+/*signup page look above */
+
+
+/* items page */
+.item-card {
+    background-color: var(--primary-green);
+    color: var(--tertiary-white);
+    border: none;
+    border-radius: 8px;
+}
+
+.item-card .card-title,
+.item-card .card-text {
+    color: var(--tertiary-white);
+}
+
+.item-card .btn-primary {
+    background-color: var(--secondary-gold);
+    border-color: var(--secondary-gold);
+}
+
+.item-card .btn-primary:hover {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+    color: var(--tertiary-white);
+}
+.item-list-title {
+    color: var(--primary-green);
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+/* items detail page */
+.item-details-container {
+    border: 2px solid var(--primary-green);
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.item-details-container h1, 
+.item-details-container p {
+    color: var(--primary-green);
+    margin-bottom: 15px;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--primary-green);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.back-link i {
+    margin-right: 8px;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .item-details-container {
+        padding: 20px;
+    }
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--primary-green);
+    color: white;
+    text-align: center;
+    z-index: 1;
+}

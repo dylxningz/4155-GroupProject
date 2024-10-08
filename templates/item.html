@@ -1,17 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Item Detail</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Item Details{% endblock %}
+{% block content %}
     <div class="container mt-5">
-        <h1 id="item-title">Item Title</h1>
-        <p id="item-description">Item description</p>
-        <p id="item-price">Price: $<span id="item-price-value"></span></p>
-        <a href="/items" class="btn btn-secondary">Back to Items List</a>
+        <a href="/items" class="back-link text-success mb-3">
+            <i class="fas fa-arrow-left"></i> Back to Items List
+        </a>
+        
+        <div class="item-details-container p-4 mt-3">
+            <h1 id="item-title" class="text-center">Item Title</h1>
+            <p id="item-description" class="text-center">Item description</p>
+            <p id="item-price" class="text-center">Price: $<span id="item-price-value"></span></p>
+        </div>
     </div>
 
     <script>
@@ -28,5 +27,5 @@
         })
         .catch(error => console.error('Error fetching item details:', error));
     </script>
-</body>
-</html>
+
+{% endblock %}

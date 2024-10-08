@@ -1,76 +1,79 @@
 {% extends 'base.html' %}
-{% block title %}Item Details{% endblock %}
+{% block title %}Sign Up{% endblock %}
 {% block content %}
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <h2 class="text-center">Sign Up</h2>
-                <form id="submitForm" method="POST" action="/signup">
-                    <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="Enter full name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email address</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="confirm_password">Confirm Password</label>
-                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
-                </form>
+                <!-- Encasing signup title and form within the same styled box -->
+                <div class="login-container">
+                    <h2 class="login-title text-center">Sign Up</h2>
+                    <form id="submitForm" method="POST" action="/signup">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Enter full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email address</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
+                        </div>
+                        <button type="submit" class="btn login-btn btn-block">Sign Up</button>
+                    </form>
 
-                <script>
-                    document.getElementById("submitForm").addEventListener("submit", function(event) {
-                        event.preventDefault(); // Prevent the default form submission
-                
-                        const password = document.getElementById('password').value;
-                        const confirmPassword = document.getElementById('confirm_password').value;
-                
-                        if (password !== confirmPassword) {
-                            alert("Passwords do not match!");
-                            return; // Stop form submission if passwords don't match
-                        }
-                
-                        const formData = {
-                            name: document.getElementById('name').value,
-                            email: document.getElementById('email').value,
-                            password: password
-                        };
-                
-                        console.log(formData);
-                
-                        fetch('http://127.0.0.1:8000/accounts', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
+                    <script>
+                        document.getElementById("submitForm").addEventListener("submit", function(event) {
+                            event.preventDefault(); // Prevent the default form submission
+                        
+                            const password = document.getElementById('password').value;
+                            const confirmPassword = document.getElementById('confirm_password').value;
+                        
+                            if (password !== confirmPassword) {
+                                alert("Passwords do not match!");
+                                return; // Stop form submission if passwords don't match
                             }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log(data);
-                            alert('Sign-up successful! Redirecting to login page.');
-                            window.location.href = "/login";  // Redirect to login page after success
-                        })
-                        .catch(error => {
-                            console.error('There was a problem with the fetch operation:', error);
-                            alert('Form submission failed.');
+                        
+                            const formData = {
+                                name: document.getElementById('name').value,
+                                email: document.getElementById('email').value,
+                                password: password
+                            };
+                        
+                            console.log(formData);
+                        
+                            fetch('http://127.0.0.1:8000/accounts', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(formData)
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok');
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log(data);
+                                alert('Sign-up successful! Redirecting to login page.');
+                                window.location.href = "/login";  // Redirect to login page after success
+                            })
+                            .catch(error => {
+                                console.error('There was a problem with the fetch operation:', error);
+                                alert('Form submission failed.');
+                            });
                         });
-                    });
-                </script>
+                    </script>
 
-                <p class="text-center mt-3">Already have an account? <a href="/login">Login here</a></p>
+                    <p class="text-center mt-3">Already have an account? <a href="/login">Login here</a></p>
+                </div>
             </div>
         </div>
     </div>

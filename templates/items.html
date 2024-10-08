@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Item Details{% endblock %}
+{% block title %}Items List{% endblock %}
 {% block content %}
     <div class="container mt-5">
-        <h1>Items List</h1>
+        <h1 class="text-center item-list-title">Items List</h1>
         <div class="row" id="items-list">
             <!-- Items will be dynamically inserted here -->
         </div>
@@ -18,7 +18,7 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.classList.add('col-md-4', 'mb-3');
                 itemDiv.innerHTML = `
-                    <div class="card">
+                    <div class="card item-card">
                         <div class="card-body">
                             <h5 class="card-title">${item.title}</h5>
                             <p class="card-text">${item.description}</p>
@@ -32,6 +32,4 @@
         })
         .catch(error => console.error('Error fetching items:', error));
     </script>
-</body>
-</html>
 {% endblock %}

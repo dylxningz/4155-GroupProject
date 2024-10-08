@@ -1,17 +1,48 @@
 {% extends 'base.html' %}
-{% block title %}Item Details{% endblock %}
+{% block title %}Welcome{% endblock %}
 {% block content %}
-    <div class="container text-center mt-5">
+<div class="slideshow-container">
+    <!-- Slideshow images -->
+    <div class="slide" style="background-image: url('/static/images/indexslide/1.jpg');"></div>
+    <div class="slide" style="background-image: url('/static/images/indexslide/2.png');"></div>
+    <div class="slide" style="background-image: url('/static/images/indexslide/3.jpg');"></div>
+    <div class="slide" style="background-image: url('/static/images/indexslide/4.png');"></div>
+    <div class="slide" style="background-image: url('/static/images/indexslide/5.jpg');"></div>
+</div>
+
+ <!-- text area above the slideshow -->
+<div class="hero-text text-center">
+    <div class="overlay">
         <h1>Welcome to the Second-Hand Marketplace</h1>
         <p>Buy, sell, and trade items easily with our platform.</p>
-
         <div class="mt-4">
-            <a href="/login" class="btn btn-primary btn-lg mr-2">Login</a>
-            <a href="/signup" class="btn btn-secondary btn-lg ml-2">Sign Up</a>
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg mr-2">Login</a>
+            <a href="{{ url_for('signup') }}" class="btn btn-secondary btn-lg ml-2">Sign Up</a>
         </div>
     </div>
+</div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.style.opacity = (i === index) ? '1' : '0'; 
+    });
+}
+
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    showSlide(currentSlide);
+}
+
+showSlide(currentSlide); 
+setInterval(nextSlide, 5000); //1000 = 1 second
+    </script>
 {% endblock %}

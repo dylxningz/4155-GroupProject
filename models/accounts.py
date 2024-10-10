@@ -11,3 +11,4 @@ class Account(Base):
     password = Column(String(100), nullable=False)
 
     listings = relationship("Listing", back_populates="account")
+    

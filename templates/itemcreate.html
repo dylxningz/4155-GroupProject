@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% block title %}Item Details{% endblock %}
+{% block title %}Create New Listing{% endblock %}
 {% block content %}
-    <div class="container mt-5">
+    <div class="container mt-5 create-listing-container">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <h2 class="text-center">Create a New Listing</h2>
+                <h2 class="text-center mb-4">Create a New Listing</h2>
                 <form id="listingForm" method="POST" action="/listings">
                     <div class="form-group">
                         <label for="title">Item Title</label>
@@ -20,63 +20,141 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Submit Listing</button>
                 </form>
-
-                <script>
-                    document.getElementById("listingForm").addEventListener("submit", function(event) {
-                        event.preventDefault();
-
-                        const title = document.getElementById('title').value;
-                        const description = document.getElementById('description').value;
-                        const price = document.getElementById('price').value;
-
-                        // Fetch 'id' from the session using Flask's session storage
-                        fetch('/get-session')
-                        .then(response => response.json())
-                        .then(sessionData => {
-                            if (sessionData.error) {
-                                throw new Error(sessionData.error);
-                            }
-
-                            const userId = sessionData.id;  // Extract 'id' from session
-
-                            // Prepare form data to send to FastAPI
-                            const formData = {
-                                title: title,
-                                description: description,
-                                price: parseFloat(price),
-                                user_id: userId  // Set 'user_id' for the listing
-                            };
-
-                            // Send listing data to FastAPI
-                            fetch('http://127.0.0.1:8000/listings', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify(formData)
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    return response.json().then(data => { throw new Error(data.detail) });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                alert('Listing created successfully!');
-                                window.location.href = '/items';  // Redirect to the list of items
-                            })
-                            .catch(error => {
-                                console.error('Error from FastAPI:', error);
-                                alert(`Error creating listing: ${error.message}`);
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error fetching session data:', error);
-                            alert('Error retrieving user information. Please try again.');
-                        });
-                    });
-                </script>
             </div>
         </div>
     </div>
+
+    <style>
+        /* Add styling for the create form page */
+        .create-listing-container {
+            background-color: #f8f9fa; /* Light background for the form */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for form container */
+        }
+
+        .create-listing-container h2 {
+            color: #005035; /* Primary green for heading */
+            font-weight: bold;
+        }
+
+        /* Form elements styling */
+        .form-control {
+            margin-bottom: 20px;
+            border-radius: 8px; /* Smooth edges for form inputs */
+            padding: 10px;
+            border: 1px solid #ced4da;
+            box-shadow: none;
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: #005035; /* Highlight form on focus */
+            box-shadow: 0 0 5px rgba(0, 80, 53, 0.25); /* Subtle shadow on focus */
+        }
+
+        .btn-block {
+            background-color: #005035; /* Primary green for button */
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            border: none;
+        }
+
+        .btn-block:hover {
+            background-color: #004229; /* Darker green on hover */
+        }
+
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .create-listing-container {
+                padding: 20px;
+            }
+
+            .form-control {
+                margin-bottom: 15px;
+            }
+
+            .btn-block {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+
+    <script>
+        document.getElementById("listingForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const price = document.getElementById('price').value;
+
+            fetch('/get-session')
+            .then(response => response.json())
+            .then(sessionData => {
+                if (sessionData.error) {
+                    throw new Error(sessionData.error);
+                }
+
+                const userId = sessionData.id;  // Extract 'id' from session
+
+                // Prepare form data to send to FastAPI
+                const formData = {
+                    title: title,
+                    description: description,
+                    price: parseFloat(price),
+                    user_id: userId  // Set 'user_id' for the listing
+                };
+
+                fetch('http://127.0.0.1:8000/listings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => { throw new Error(data.detail) });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    fetch('/set-flash-message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: 'Listing created successfully!', category: 'success' })
+                    }).then(() => {
+                        window.location.href = '/items';  // Redirect to items page
+                    });
+                })
+                .catch(error => {
+                    fetch('/set-flash-message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: `Error creating listing: ${error.message}`, category: 'danger' })
+                    }).then(() => {
+                        window.location.href = '/items';  // Redirect to items page
+                    });
+                });
+            })
+            .catch(error => {
+                fetch('/set-flash-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: 'Error retrieving user information. Please try again.', category: 'danger' })
+                }).then(() => {
+                    window.location.href = '/items';  // Redirect to items page
+                });
+            });
+        });
+    </script>
 {% endblock %}

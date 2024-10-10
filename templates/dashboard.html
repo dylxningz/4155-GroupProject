@@ -1,31 +1,89 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-    <div class="dashboard-main container mt-5">
-        <!-- Greeting Section -->
-        <div class="greeting-box mb-4">
-            <h3 id="greeting">Good day, {{ session['name'] }}!</h3>
+    <div class="dashboard-container d-flex">
+        <!-- Sidebar Menu -->
+        <div class="sidebar bg-light p-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/create-item">
+                        <i class="fas fa-plus-circle"></i> Create Listing
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-envelope"></i> Messages
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-star"></i> Reviews
+                    </a>
+                </li>
+            </ul>
         </div>
 
-        <!-- User Listings Section -->
-        <div class="glass-box">
-            <h4>Your Listed Items</h4>
-            <div class="row" id="user-items">
-                <p id="no-items-message" class="no-items-message">You have not listed any items yet.</p>
+        <!-- Dashboard Main Content -->
+        <div class="dashboard-main container mt-3">
+            <!-- Greeting Section -->
+            <div class="greeting-box mb-4">
+                <h3 id="greeting">Good day, {{ session['name'] }}!</h3>
             </div>
-        </div>
 
-        <!-- Watched Listings Section -->
-        <div class="glass-box">
-            <h4>Watched Items</h4>
-            <div class="watched-box">
-                <p>No watched items yet.</p>
+            <!-- User Listings Section -->
+            <div class="glass-box">
+                <h4>Your Listed Items</h4>
+                <div class="row" id="user-items">
+                    <p id="no-items-message" class="no-items-message">You have not listed any items yet.</p>
+                </div>
+            </div>
+
+            <!-- Watched Listings Section -->
+            <div class="glass-box">
+                <h4>Watched Items</h4>
+                <div class="watched-box">
+                    <p>No watched items yet.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <style>
-        /* Apply green color to the card text to match the box color */
+        /* Ensure the content starts below the navbar without affecting layout */
+        .dashboard-container {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            width: 200px;
+            position: fixed;
+            top: 70px; /* Adjust this value according to your navbar's height */
+            bottom: 0;
+            left: 0;
+            background-color: #f8f9fa;
+        }
+
+        .nav-link {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .nav-link:hover {
+            background-color: #e9ecef;
+            color: #343a40;
+        }
+
+        .dashboard-main {
+            margin-left: 220px; /* Adjust margin to fit the sidebar */
+        }
+
+        /* Card and button styling */
         .card {
             background-color: rgba(255, 255, 255, 0.56); /* Apply the glassy green background */
             border: 1px solid rgba(255, 255, 255, 0.6);
@@ -60,49 +118,49 @@
         // Pass session variables to JavaScript safely
         const userId = "{{ session['id'] }}";   // Get the user ID from the session
 
-// Fetch the user's listings
-fetch(`http://127.0.0.1:8000/listings/user/${userId}`)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('No items found or error fetching data');
-        }
-        return response.json();
-    })
-    .then(data => {
-        const userItems = document.getElementById('user-items');
-        const noItemsMessage = document.getElementById('no-items-message');
+        // Fetch the user's listings
+        fetch(`http://127.0.0.1:8000/listings/user/${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No items found or error fetching data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const userItems = document.getElementById('user-items');
+                const noItemsMessage = document.getElementById('no-items-message');
 
-        // Clear the userItems container before appending new items
-        userItems.innerHTML = '';
+                // Clear the userItems container before appending new items
+                userItems.innerHTML = '';
 
-        // If no items are found, show the message
-        if (data.length === 0) {
-            noItemsMessage.style.display = 'block';
-        } else {
-            noItemsMessage.style.display = 'none'; // Hide message if there are items
-        }
+                // If no items are found, show the message
+                if (data.length === 0) {
+                    noItemsMessage.style.display = 'block';
+                } else {
+                    noItemsMessage.style.display = 'none'; // Hide message if there are items
+                }
 
-        // If items are found, display them as cards
-        data.forEach(item => {
-            const itemCard = document.createElement('div');
-            itemCard.classList.add('col-md-4', 'mb-3');
-            itemCard.innerHTML = `
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">${item.title}</h5>
-                        <p class="card-text">${item.description}</p>
-                        <p class="card-text">$${item.price}</p>
-                        <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
-                    </div>
-                </div>
-            `;
-            userItems.appendChild(itemCard);
-        });
-    })
-    .catch(error => {
-        console.error('Error fetching user items:', error);
-        const noItemsMessage = document.getElementById('no-items-message');
-        noItemsMessage.style.display = 'block';  // Show message if there's an error
-    });
+                // If items are found, display them as cards
+                data.forEach(item => {
+                    const itemCard = document.createElement('div');
+                    itemCard.classList.add('col-md-4', 'mb-3');
+                    itemCard.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">${item.title}</h5>
+                                <p class="card-text">${item.description}</p>
+                                <p class="card-text">$${item.price}</p>
+                                <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                    `;
+                    userItems.appendChild(itemCard);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching user items:', error);
+                const noItemsMessage = document.getElementById('no-items-message');
+                noItemsMessage.style.display = 'block';  // Show message if there's an error
+            });
     </script>
 {% endblock %}

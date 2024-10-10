@@ -1,7 +1,74 @@
 {% extends 'base.html' %}
-{% block title %}Item Details{% endblock %}
+{% block title %}Settings{% endblock %}
 {% block content %}
-    <div class="settings-main">
-        
+    <div class="settings-main container mt-5">
+        <h2 class="text-center mb-4">Account Settings</h2>
+
+        <!-- Profile Settings Section -->
+        <div class="settings-section mb-4">
+            <h4>Profile Information</h4>
+            <form id="profileForm" method="POST" action="/update-profile">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ session['name'] }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+            </form>
+        </div>
+
+        <!-- Password Change Section -->
+        <div class="settings-section mb-4">
+            <h4>Change Password</h4>
+            <form id="passwordForm" method="POST" action="/change-password">
+                <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="password" class="form-control" id="current-password" name="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" class="form-control" id="new-password" name="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+        </div>
+
+        <!-- Notification Settings Section -->
+        <div class="settings-section">
+            <h4>Notification Preferences</h4>
+            <form id="notificationForm" method="POST" action="/update-notifications">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="email-notifications" name="email-notifications" checked>
+                    <label class="form-check-label" for="email-notifications">Receive email notifications</label>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Update Notifications</button>
+            </form>
+        </div>
     </div>
+
+    <style>
+        .settings-main {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-section {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h4 {
+            margin-bottom: 15px;
+        }
+    </style>
+
 {% endblock %}

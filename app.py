@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import requests
 from flask import flash, redirect, url_for
 
+
 app = Flask(__name__)
 app.secret_key = 'supersecretkey' 
 
@@ -30,6 +31,14 @@ def get_session():
         })
     else:
         return jsonify({"error": "No user session found"}), 400
+    
+@app.route('/set-flash-message', methods=['POST'])
+def set_flash_message():
+    data = request.json
+    message = data.get('message')
+    category = data.get('category', 'info')
+    flash(message, category)
+    return jsonify({"status": "success"})
 # Route for the homepage
 @app.route('/')
 def index():
@@ -101,6 +110,80 @@ def dashboard():
     messages = get_flashed_messages(with_categories=True)
     
     return render_template('dashboard.html', user_id=session.get('id'))
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    return render_template('settings.html')
+
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+    if 'id' not in session:
+        flash('You need to be logged in to update your profile.', 'danger')
+        return redirect(url_for('login'))
+
+    # Get the form data
+    user_id = session['id']
+    name = request.form.get('name')
+    email = request.form.get('email')
+
+    # Send the data to the FastAPI backend
+    response = requests.put(f'http://127.0.0.1:8000/accounts/{user_id}', json={
+        'name': name,
+        'email': email
+    })
+
+    if response.status_code == 200:
+        flash('Profile updated successfully!', 'success')
+        session['name'] = name
+        session['email'] = email
+    else:
+        flash('Error updating profile. Please try again.', 'danger')
+
+    return redirect(url_for('settings'))
+
+@app.route('/change-password', methods=['POST'])
+def change_password():
+    if 'id' not in session:
+        flash('You need to be logged in to change your password.', 'danger')
+        return redirect(url_for('login'))
+
+    # Get the form data
+    user_id = session['id']
+    current_password = request.form.get('current-password')
+    new_password = request.form.get('new-password')
+    confirm_password = request.form.get('confirm-password')
+
+    # Check if the new password and confirm password match
+    if new_password != confirm_password:
+        flash('New password and confirm password do not match.', 'danger')
+        return redirect(url_for('settings'))
+
+    # Send the data to the FastAPI backend for password change
+    response = requests.post(f'http://127.0.0.1:8000/accounts/{user_id}/change-password', json={
+        'current_password': current_password,
+        'new_password': new_password
+    })
+
+    if response.status_code == 200:
+        flash('Password changed successfully!', 'success')
+    else:
+        flash('Error changing password. Please try again.', 'danger')
+
+    return redirect(url_for('settings'))
+
+@app.route('/update-notifications', methods=['POST'])
+def update_notifications():
+    if 'id' not in session:
+        flash('You need to be logged in to update notifications.', 'danger')
+        return redirect(url_for('login'))
+
+    # Handle the notification preferences here (mocking it in this case)
+    email_notifications = request.form.get('email-notifications') == 'on'
+    # Assume backend handles notifications (you can customize this as needed)
+    flash('Notification preferences updated!', 'success')
+
+    return redirect(url_for('settings'))
 
 # Route for creating a new item (listing)
 @app.route('/create-item', methods=['GET', 'POST'])
@@ -192,10 +275,7 @@ def item_detail(item_id):
 def userProfile():
     return render_template('userProfile.html')
 
-# Route for user settings
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
+
 
 @app.route('/api/signup', methods=['POST'])
 def user_signup():

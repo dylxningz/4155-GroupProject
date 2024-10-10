@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from models import listings as model
 from typing import List
 
-
 router = APIRouter(
     tags=['Listings'],
     prefix="/listings"

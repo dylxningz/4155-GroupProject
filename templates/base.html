@@ -21,9 +21,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/items">Shop</a>
                 </li>
-                <!-- calls session and sees if email(sessionkey) is valid -->
                 {% if session['email'] %}
-                <!-- Nav when user is logged in -->
                 <li class="nav-item">
                     <a class="nav-link" href="/dashboard">Dashboard</a>
                 </li>
@@ -34,7 +32,6 @@
                     <a class="nav-link" href="#">{{ session['username'] }}</a>
                 </li>
                 {% else %}
-                <!-- Nav when no user is logged in -->
                 <li class="nav-item">
                     <a class="nav-link" href="/login">Login</a>
                 </li>
@@ -46,10 +43,11 @@
         </div>
     </nav>
     
-    <!-- Flash message section embedded in base.html -->
-    <div class="container mt-2">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
+    <!-- Flash message section -->
+    <div class="flash-message-container mt-2">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <div class="container">
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
@@ -58,21 +56,40 @@
                         </button>
                     </div>
                 {% endfor %}
-            {% endif %}
+            </div>
+        {% endif %}
         {% endwith %}
     </div>
 
+    <!-- Main content section -->
     <div class="container mt-5">
         {% block content %}
-        <!-- HTML content that is called for specific route displays here-->
         {% endblock %}
     </div>
 
-    <!-- Footer section embedded in base.html -->
+    <!-- Footer section -->
     <footer class="footer py-4 text-center">
         <p>&copy; 2024 NinerBuys. All rights reserved.</p>
     </footer>
 
+    <script>
+        function adjustFooter() {
+            const footer = document.querySelector('footer');
+            const contentHeight = document.body.offsetHeight; // Total height of the page content
+            const viewportHeight = window.innerHeight; // Viewport height
+    
+            // If content is shorter than the viewport, make the footer sticky
+            if (contentHeight < viewportHeight) {
+                footer.classList.add('sticky-footer');
+            } else {
+                footer.classList.remove('sticky-footer');
+            }
+        }
+    
+        // Run the function on page load and when the window is resized
+        window.addEventListener('load', adjustFooter);
+        window.addEventListener('resize', adjustFooter);
+    </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

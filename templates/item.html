@@ -10,22 +10,66 @@
             <h1 id="item-title" class="text-center">Item Title</h1>
             <p id="item-description" class="text-center">Item description</p>
             <p id="item-price" class="text-center">Price: $<span id="item-price-value"></span></p>
+            <p id="item-author" class="text-center text-muted">Posted by: <span id="item-owner-name"></span></p>
+            
+            <div id="owner-actions" class="text-center mt-4" style="display: none;">
+                <a href="#" id="edit-btn" class="btn btn-warning">Edit</a>
+                <button id="delete-btn" class="btn btn-danger">Delete</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
         const itemId = window.location.pathname.split('/').pop();
+        const userId = "{{ session['id'] }}"; // Current logged-in user ID
 
         // Fetch item details based on ID
-        fetch(`/listings/${itemId}`)
+        fetch(`http://127.0.0.1:8000/listings/${itemId}`)
         .then(response => response.json())
         .then(data => {
             document.getElementById('item-title').textContent = data.title;
             document.getElementById('item-description').textContent = data.description;
             document.getElementById('item-price-value').textContent = data.price;
+
+            // Fetch the owner details
+            fetch(`http://127.0.0.1:8000/accounts/${data.user_id}`)
+            .then(ownerResponse => ownerResponse.json())
+            .then(ownerData => {
+                document.getElementById('item-owner-name').textContent = ownerData.name;
+
+                // If the logged-in user is the owner of the item, show the edit and delete buttons
+                if (userId == data.user_id) {
+                    document.getElementById('owner-actions').style.display = 'block';
+                    document.getElementById('edit-btn').href = `/edit-item/${itemId}`;
+                }
+            })
+            .catch(ownerError => {
+                console.error('Error fetching owner details:', ownerError);
+            });
         })
         .catch(error => console.error('Error fetching item details:', error));
-    </script>
 
+        // Handle delete button click
+        document.getElementById('delete-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this item?')) {
+                fetch(`http://127.0.0.1:8000/listings/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Item deleted successfully');
+                        window.location.href = '/items';
+                    } else {
+                        alert('Error deleting item');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting item:', error);
+                });
+            }
+        });
+    </script>
 {% endblock %}

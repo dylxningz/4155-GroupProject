@@ -5,6 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 
 def create(db: Session, request):
+    print(f"Creating listing: title={request.title}, description={request.description}, price={request.price}, user_id={request.user_id}")
+
     new_item = model.Listing(
         title=request.title,
         description=request.description,

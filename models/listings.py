@@ -8,7 +8,7 @@ class Listing(Base):
     id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("accounts.id"))
     title = Column(String(150), nullable=False)
-    description = Column(String(150), unique=True, nullable=False)
+    description = Column(String(150), unique=False, nullable=False)
     price = Column(Float, nullable=False)
 
     account = relationship("Account", back_populates="listings")

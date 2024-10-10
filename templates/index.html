@@ -10,23 +10,30 @@
     <div class="slide" style="background-image: url('/static/images/indexslide/5.jpg');"></div>
 </div>
 
- <!-- text area above the slideshow -->
+<!-- Text area above the slideshow -->
 <div class="hero-text text-center">
     <div class="overlay">
         <h1>Welcome to the Second-Hand Marketplace</h1>
         <p>Buy, sell, and trade items easily with our platform.</p>
         <div class="mt-4">
+            {% if session['email'] %}
+            <!-- Display this if user is logged in -->
+            <a href="{{ url_for('items') }}" class="btn btn-primary btn-lg mr-2">Shop</a>
+            <a href="{{ url_for('create_item') }}" class="btn btn-secondary btn-lg ml-2">Sell</a>
+            {% else %}
+            <!-- Display this if user is not logged in -->
             <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg mr-2">Login</a>
             <a href="{{ url_for('signup') }}" class="btn btn-secondary btn-lg ml-2">Sign Up</a>
+            {% endif %}
         </div>
     </div>
 </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-    <script>
+<script>
 let currentSlide = 0;
 const slides = document.querySelectorAll('.slide');
 const totalSlides = slides.length;
@@ -43,6 +50,6 @@ function nextSlide() {
 }
 
 showSlide(currentSlide); 
-setInterval(nextSlide, 5000); //1000 = 1 second
-    </script>
+setInterval(nextSlide, 5000); // 1000 = 1 second
+</script>
 {% endblock %}

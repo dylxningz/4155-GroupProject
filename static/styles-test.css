@@ -228,13 +228,126 @@ body {
     }
 }
 
+/* dashboard page */
+.dashboard-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Glass effect for boxes */
+.glass-box {
+    background: rgba(11, 94, 28, 0.56); 
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); 
+    backdrop-filter: blur(11.2px); 
+    -webkit-backdrop-filter: blur(11.2px); 
+    border: 1px solid rgba(11, 94, 28, 0.6); 
+    padding: 20px; 
+    margin-bottom: 20px; 
+    color: white; 
+    width: 100%;
+    max-width: 800px;
+}
+
+h4 {
+    color: white; 
+}
+
+
+.no-items-message {
+    color: white;
+    font-style: italic;
+    text-align: center;
+    padding: 10px 0;
+}
+
+
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.container {
+    flex: 1; 
+}
+
+/* Footer */
 footer {
+    background-color: var(--primary-green);
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    width: 100%;
+    position: relative;
+}
+
+
+.sticky-footer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    background-color: var(--primary-green);
+}
+
+.flash-message-container {
+    position: fixed; 
+    top: 10px; 
+    left: 50%;
+    transform: translateX(-50%); 
+    z-index: 9999; 
+    width: 80%; 
+    max-width: 600px;
+}
+
+.flash-message-container .alert {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+}
+
+.item-details-container {
+    border: 2px solid var(--primary-green);
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--primary-green);
+    font-weight: bold;
+    text-decoration: none;
+    margin-bottom: 15px;
+}
+
+.back-link i {
+    margin-right: 8px;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.owner-actions {
+    display: none;
+}
+
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
     color: white;
-    text-align: center;
-    z-index: 1;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-warning:hover, .btn-danger:hover {
+    opacity: 0.8;
 }

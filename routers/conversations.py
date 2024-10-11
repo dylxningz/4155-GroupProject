@@ -10,6 +10,11 @@ router = APIRouter(
     tags=['Conversations']
 )
 
+
+@router.get("/conversations")
+def get_user_conversations(user_id: int, db: Session = Depends(get_db)):
+    return controller.get_conversations_for_user(db, user_id)
+
 @router.post("/", response_model=schema.ConversationResponse, status_code=status.HTTP_201_CREATED)
 def create_conversation(request: schema.ConversationCreate, db: Session = Depends(get_db)):
     return controller.create_conversation(db, request)
@@ -18,6 +23,14 @@ def create_conversation(request: schema.ConversationCreate, db: Session = Depend
 @router.get("/", response_model=List[schema.ConversationResponse])
 def get_conversations_for_user(user_id: int, db: Session = Depends(get_db)):
     return controller.get_conversations_for_user(db, user_id)
+
+# Ensure this function is defined in your controller instead
+# Remove this from the router file if already defined in the controller
+def get_conversations_for_user(db: Session, user_id: int):
+    conversations = db.query(ConversationModel).filter(
+        ConversationModel.user_id == user_id  # Adjust this according to your model structure
+    ).all()
+    return conversations
 
 
 @router.post("/message", response_model=schema.MessageResponse, status_code=status.HTTP_201_CREATED)
@@ -45,3 +58,10 @@ def delete_message(message_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Message not found")
     controller.delete_message(db, message_id)
     return {"detail": "Message deleted successfully"}
+
+@router.get("/{conversation_id}/messages", response_model=List[schema.MessageResponse])
+def get_messages(conversation_id: int, db: Session = Depends(get_db)):
+    messages = controller.get_messages_for_conversation(db, conversation_id)
+    if not messages:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No messages found.")
+    return messages

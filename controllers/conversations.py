@@ -1,12 +1,22 @@
 from sqlalchemy.orm import Session
-from models import conversations as model
+from models.conversations import Conversation, Message  # Only import what's necessary
 from schemas import conversations as schema
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 
+def get_conversations_for_user(db: Session, user_id: int):
+    try:
+        result = db.query(Conversation).filter(
+            (Conversation.participant_1 == user_id) | 
+            (Conversation.participant_2 == user_id)
+        ).all()
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return result
 
 def create_conversation(db: Session, request: schema.ConversationCreate):
-    new_conversation = model.Conversation(
+    new_conversation = Conversation(  # Use the imported Conversation model
         participant_1=request.participant_1,
         participant_2=request.participant_2
     )
@@ -21,26 +31,13 @@ def create_conversation(db: Session, request: schema.ConversationCreate):
 
     return new_conversation
 
-
-def get_conversations_for_user(db: Session, user_id: int):
-    try:
-        result = db.query(model.Conversation).filter(
-            (model.Conversation.participant_1 == user_id) | 
-            (model.Conversation.participant_2 == user_id)
-        ).all()
-    except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    return result
-
-
 def add_message(db: Session, request: schema.MessageCreate):
     try:
-        conversation = db.query(model.Conversation).filter(model.Conversation.id == request.conversation_id).first()
+        conversation = db.query(Conversation).filter(Conversation.id == request.conversation_id).first()
         if not conversation:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found!")
         
-        new_message = model.Message(
+        new_message = Message(  # Use the imported Message model
             conversation_id=request.conversation_id,
             sender_id=request.sender_id,
             message_body=request.message_body
@@ -56,10 +53,10 @@ def add_message(db: Session, request: schema.MessageCreate):
 
 def mark_as_read(db: Session, conversation_id: int, user_id: int):
     try:
-        messages = db.query(model.Message).filter(
-            model.Message.conversation_id == conversation_id,
-            model.Message.sender_id != user_id,
-            model.Message.is_read == False
+        messages = db.query(Message).filter(
+            Message.conversation_id == conversation_id,
+            Message.sender_id != user_id,
+            Message.is_read == False
         ).all()
 
         for message in messages:
@@ -71,11 +68,12 @@ def mark_as_read(db: Session, conversation_id: int, user_id: int):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     return {"message": "Messages marked as read"}
+
 def get_conversation(db: Session, conversation_id: int):
-    return db.query(model.Conversation).filter(model.Conversation.id == conversation_id).first()
+    return db.query(Conversation).filter(Conversation.id == conversation_id).first()
 
 def delete_conversation(db: Session, conversation_id: int):
-    conversation = db.query(model.Conversation).filter(model.Conversation.id == conversation_id).first()
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
     if not conversation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found.")
     
@@ -84,12 +82,28 @@ def delete_conversation(db: Session, conversation_id: int):
     return {"detail": "Conversation deleted successfully."}
 
 def get_message(db: Session, message_id: int):
-    return db.query(model.Message).filter(model.Message.id == message_id).first()
+    return db.query(Message).filter(Message.id == message_id).first()
 
 def delete_message(db: Session, message_id: int):
-    message = db.query(model.Message).filter(model.Message.id == message_id).first()
+    message = db.query(Message).filter(Message.id == message_id).first()
     if not message:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found.")
+    
     db.delete(message)
     db.commit()
     return {"detail": "Message deleted successfully."}
+
+def get_messages_for_conversation(db: Session, conversation_id: int):
+    try:
+        messages = db.query(Message).filter(
+            Message.conversation_id == conversation_id
+        ).order_by(Message.created_at).all()
+        
+        if not messages:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No messages found in this conversation.")
+        
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    return messages

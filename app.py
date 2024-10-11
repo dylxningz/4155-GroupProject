@@ -302,6 +302,39 @@ def get_listing(item_id):
     # Assuming you're making a request to the FastAPI backend here
     response = requests.get(f'http://127.0.0.1:8000/listings/{item_id}')
     return jsonify(response.json())
+@app.route('/conversations')
+def conversations():
+    user_id = session.get('id')
+    if not user_id:
+        flash('You need to be logged in to view conversations.', 'danger')
+        return redirect(url_for('login'))
+
+    response = requests.get(f'http://127.0.0.1:8000/conversations/?user_id={user_id}')
+    
+    if response.status_code == 200:
+        conversations = response.json()
+        return render_template('conversations.html', conversations=conversations)
+    else:
+        flash('Failed to retrieve conversations. Please try again.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+@app.route('/start-conversation', methods=['GET', 'POST'])
+def start_conversation():
+    if request.method == 'POST':
+        participant_id = request.form.get('participant_id')  # Get the participant's ID or username
+        
+        # Logic to create a new conversation (assuming you have a function to handle it)
+        response = requests.post('http://127.0.0.1:8000/conversations', json={'participant_id': participant_id})
+        
+        if response.status_code == 201:
+            flash('Conversation started successfully!', 'success')
+            return redirect(url_for('conversations'))
+        else:
+            flash('Failed to start conversation. Please try again.', 'danger')
+            return redirect(url_for('conversations'))
+
+    # If GET request, render the start conversation form
+    return render_template('start_conversation.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

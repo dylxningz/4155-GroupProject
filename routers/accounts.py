@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from controllers import accounts as controller
@@ -68,7 +69,7 @@ def change_password(user_id: int, request: PasswordChangeRequest, db: Session = 
     return {"message": "Password changed successfully"}
 
 # Retrieve all accounts
-@router.get("/", response_model=list[schema.Account])
+@router.get("/", response_model=List[schema.Account])
 def read_all(db: Session = Depends(get_db)):
     return controller.read_all(db)
 

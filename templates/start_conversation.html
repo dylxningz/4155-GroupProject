@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Start a Conversation{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2>Start a Conversation</h2>
+
+        <form method="POST" action="{{ url_for('start_conversation') }}">
+            <div class="form-group">
+                <label for="participant_id">Participant's ID or Username</label>
+                <input type="text" class="form-control" id="participant_id" name="participant_id" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Start Conversation</button>
+            <a href="{{ url_for('conversations') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+{% endblock %}

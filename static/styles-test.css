@@ -193,6 +193,11 @@ body {
     margin-bottom: 30px;
 }
 
+.items-search-filters{
+    display: flex;
+    gap: 10px;
+}
+
 /* items detail page */
 .item-details-container {
     border: 2px solid var(--primary-green);

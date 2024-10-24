@@ -3,6 +3,28 @@
 {% block content %}
     <div class="container mt-5">
         <h1 class="text-center item-list-title">Items List</h1>
+
+        <!-- Container for search filters -->
+        <!-- TODO: Search by "name", "price range", "tag", "seller" -->
+        
+        <details>
+            <summary>Search Filters</summary>
+            <div class="items-search-filters">
+                <div class="item-name">
+                    <label for="item-search-by-name">Item Name:</label>
+                    <input type="search" placeholder="ex. &#34;Calculator&#34;, &#34;Xbox One Controller&#34;" name="item-name" id="item-search-by-name">
+                </div>
+    
+                <div class="price-range">
+                    <label for="item-search-by-price-range">Price Range: $0 <input type="range" name="item-price-range" id="item-search-by-price-range" min="0" max="101" > $<output for="item-search-by-price-range" id="item-price-range-max"></output></label>
+                </div>
+
+                <div class="submit-filter">
+                    <button type="submit" id="ITEM-SEARCH-FILTER-BUTTON">Submit</button>
+                </div>
+            </div>
+        </details>
+        <br>
         <div class="row" id="items-list">
             <!-- Items will be dynamically inserted here -->
         </div>
@@ -32,4 +54,57 @@
         })
         .catch(error => console.error('Error fetching items:', error));
     </script>
+    
+    <script>
+        // Script for searching with filters:
+        // Find the slider element along with the element that displays the output of the slider
+        const range_max = document.querySelector("#item-price-range-max");
+        let slider_value = 0;
+        const price_slider = document.querySelector("#item-search-by-price-range");
+        price_slider.addEventListener("input", (event) => {
+            if(event.target.value > 100){
+                range_max.textContent = "100+"
+                slider_value = 101;
+            } else {
+                range_max.textContent = event.target.value;
+                slider_value = event.target.value;
+            }
+        });
+        
+        // Find "Submit" button
+        const submit_button = document.getElementById("ITEM-SEARCH-FILTER-BUTTON");
+        // Add event listener for when "Submit" is clicked and reload itemsList with narrowed search results
+        submit_button.addEventListener("click", (event) => {
+            const item_string = document.getElementById("item-search-by-name").value.toLowerCase();
+            const itemsList = document.getElementById('items-list');
+            
+            // Essentially the same process as originally loading the page...
+            fetch('/listings')
+            .then(response => response.json())
+            .then(data => {
+                // Clear itemsList before serving items from new query!
+                itemsList.innerHTML = "";
+                data.forEach(item => {
+                    // IF the search term is in the listing title or description AND the price slider is set to the appropriate interval
+                    // THEN, create a new div to serve the item in:
+                    if((item.title.toLowerCase().includes(item_string) || item.description.toLowerCase().includes(item_string)) && item.price <= slider_value){
+                        const itemDiv = document.createElement('div');
+                        itemDiv.classList.add('col-md-4', 'mb-3');
+                        itemDiv.innerHTML = `
+                            <div class="card item-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">${item.title}</h5>
+                                    <p class="card-text">${item.description}</p>
+                                    <p class="card-text">$${item.price}</p>
+                                    <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                                </div>
+                            </div>
+                        `;
+                        itemsList.appendChild(itemDiv);
+                    }
+                })
+            })
+        });
+    </script>
+
 {% endblock %}

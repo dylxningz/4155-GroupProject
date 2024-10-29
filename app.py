@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, get_flashed_messages
 import requests
 from flask import flash, redirect, url_for
-
+import sys
+import subprocess
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey' 
@@ -337,4 +338,5 @@ def start_conversation():
     return render_template('start_conversation.html')
 
 if __name__ == '__main__':
+    subprocess.Popen([sys.executable, "api.py"])
     app.run(debug=True)

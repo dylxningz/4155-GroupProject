@@ -8,17 +8,15 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL
 )
 
-print("ABOUT TO CHECK DB")
+print("Checking Database...")
 db = engine.connect()
 db_table = db.execute(text(f"SHOW DATABASES LIKE '{conf.db_name}';")).fetchone()
 
 # If result is None, the database doesn't exist, so create it
 if db_table is None:
-    print("CREATING DB")
+    print("Creating Database Table...")
     db.execute(text(f"CREATE DATABASE {conf.db_name};"))
-    print("DB CREATED")
-
-print("CHECKED DB")
+    print("Database Table Created!")
 
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{conf.db_user}:{quote_plus(conf.db_password)}@{conf.db_host}:{conf.db_port}/{conf.db_name}?charset=utf8mb4"
 engine = create_engine(
@@ -29,8 +27,7 @@ Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-
-print("DONE WITH DATABASE")
+print("Database Setup Complete!")
 
 def get_db():
     db = Session()

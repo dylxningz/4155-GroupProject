@@ -12,3 +12,5 @@ class Listing(Base):
     price = Column(Float, nullable=False)
 
     account = relationship("Account", back_populates="listings")
+    images = relationship("Image", back_populates="listing")
+

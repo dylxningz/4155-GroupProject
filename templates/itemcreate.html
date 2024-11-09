@@ -18,7 +18,12 @@
                         <label for="price">Price ($)</label>
                         <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="Enter item price" required>
                     </div>
+                    <div class="form-group">
+                        <label for="imageInput">Image Upload</label>
+                        <input type="file" id="imageInput" accept="image/*" />
+                    </div>
                     <button type="submit" class="btn btn-primary btn-block">Submit Listing</button>
+
                 </form>
             </div>
         </div>
@@ -90,6 +95,16 @@
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
+            const imageInput = document.getElementById('imageInput').files[0];  // Get the image file
+
+            function encodeImageFileAsBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);  // Remove Base64 prefix
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);  // Read file as data URL
+                });
+            }
 
             fetch('/get-session')
             .then(response => response.json())
@@ -107,42 +122,56 @@
                     price: parseFloat(price),
                     user_id: userId  // Set 'user_id' for the listing
                 };
+                console.log("Trying to create listing");
 
-                fetch('http://127.0.0.1:8000/listings', {
+                return fetch('http://127.0.0.1:8000/listings', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(formData)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => { throw new Error(data.detail) });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    fetch('/set-flash-message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ message: 'Listing created successfully!', category: 'success' })
-                    }).then(() => {
-                        window.location.href = '/items';  // Redirect to items page
-                    });
-                })
-                .catch(error => {
-                    fetch('/set-flash-message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ message: `Error creating listing: ${error.message}`, category: 'danger' })
-                    }).then(() => {
-                        window.location.href = '/items';  // Redirect to items page
-                    });
                 });
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => { throw new Error(data.detail) });
+                }
+                console.log("Successfully created listing");
+                return response.json();
+            })
+            .then(async data => {
+                console.log("Trying to create image");
+                const listingId = data.id;  // Get the ID of the new listing
+
+                if (imageInput) {  // Check if an image was uploaded
+                    const base64Image = await encodeImageFileAsBase64(imageInput);  // Encode image to Base64
+                    const imageData = {
+                        listing_id: listingId,
+                        img_data: base64Image  // Add Base64 string of the image
+                    };
+
+                    // Send the image data in JSON format
+                    return fetch('http://127.0.0.1:8000/images', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(imageData)
+                    });
+                }
+            })
+            .then(() => {
+                // Set a success message and redirect to items page
+                return fetch('/set-flash-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: 'Listing and image created successfully!', category: 'success' })
+                });
+            })
+            .then(() => {
+                window.location.href = '/items';  // Redirect to items page
             })
             .catch(error => {
                 fetch('/set-flash-message', {
@@ -150,11 +179,12 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message: 'Error retrieving user information. Please try again.', category: 'danger' })
+                    body: JSON.stringify({ message: `Error creating listing: ${error.message}`, category: 'danger' })
                 }).then(() => {
                     window.location.href = '/items';  // Redirect to items page
                 });
             });
         });
     </script>
+
 {% endblock %}

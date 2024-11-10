@@ -39,7 +39,6 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
 # Create new account
 @router.post("/", response_model=schema.Account)
 def create(request: schema.AccountCreate, db: Session = Depends(get_db)):
-    request.password = hash_password(request.password)  # Hash password before saving
     return controller.create(db=db, request=request)
 
 # Update account profile (name and email)

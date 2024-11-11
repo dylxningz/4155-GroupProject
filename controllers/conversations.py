@@ -4,7 +4,7 @@ from schemas import conversations as schema
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 
-def get_conversations_for_user(db: Session, user_id: int):
+def get_conversations_for_user(db: Session, user_id: str):
     try:
         result = db.query(Conversation).filter(
             (Conversation.participant_1 == user_id) | 
@@ -16,9 +16,10 @@ def get_conversations_for_user(db: Session, user_id: int):
     return result
 
 def create_conversation(db: Session, request: schema.ConversationCreate):
-    new_conversation = Conversation(  # Use the imported Conversation model
+    new_conversation = Conversation(
         participant_1=request.participant_1,
-        participant_2=request.participant_2
+        participant_2=request.participant_2,
+        price=request.price  # Ensure 'price' is included
     )
 
     try:
@@ -37,10 +38,10 @@ def add_message(db: Session, request: schema.MessageCreate):
         if not conversation:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found!")
         
-        new_message = Message(  # Use the imported Message model
+        new_message = Message(
             conversation_id=request.conversation_id,
-            sender_id=request.sender_id,
-            message_body=request.message_body
+            sender=request.sender_id,  # Ensure sender uses 'sender' not 'sender_id' for consistency
+            content=request.message_body
         )
         db.add(new_message)
         db.commit()
@@ -51,11 +52,11 @@ def add_message(db: Session, request: schema.MessageCreate):
 
     return new_message
 
-def mark_as_read(db: Session, conversation_id: int, user_id: int):
+def mark_as_read(db: Session, conversation_id: int, user_id: str):
     try:
         messages = db.query(Message).filter(
             Message.conversation_id == conversation_id,
-            Message.sender_id != user_id,
+            Message.sender != user_id,
             Message.is_read == False
         ).all()
 

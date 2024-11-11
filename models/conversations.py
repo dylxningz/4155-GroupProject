@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, String, Boolean, DateTime, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from  dependencies.database import Base
+from dependencies.database import Base
 
 class Conversation(Base):
     __tablename__ = 'conversations'
@@ -9,6 +9,7 @@ class Conversation(Base):
     id = Column(Integer, primary_key=True, index=True)
     participant_1 = Column(Integer, ForeignKey("accounts.id"))
     participant_2 = Column(Integer, ForeignKey("accounts.id"))
+    price = Column(Float, nullable=False)  # Add the price column
     created_at = Column(DateTime, default=datetime.utcnow)
 
     messages = relationship("Message", back_populates="conversation", cascade="all, delete")

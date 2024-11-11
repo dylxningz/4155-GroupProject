@@ -322,20 +322,84 @@ def conversations():
 @app.route('/start-conversation', methods=['GET', 'POST'])
 def start_conversation():
     if request.method == 'POST':
-        participant_id = request.form.get('participant_id')  # Get the participant's ID or username
-        
-        # Logic to create a new conversation (assuming you have a function to handle it)
-        response = requests.post('http://127.0.0.1:8000/conversations', json={'participant_id': participant_id})
-        
+        participant_2 = request.form.get('participant_2')
+        price = request.form.get('price')
+        participant_1 = session.get('id')  # The logged-in user ID
+
+        if not all([participant_1, participant_2, price]):
+            flash('Participant and price must be provided.', 'danger')
+            return redirect(url_for('start_conversation'))
+
+        conversation_data = {
+            'participant_1': participant_1,
+            'participant_2': participant_2,
+            'price': float(price)
+        }
+
+        print(f"Form data sent: {conversation_data}")  # Debug log
+
+        response = requests.post('http://127.0.0.1:8000/conversations', json=conversation_data)
+
         if response.status_code == 201:
             flash('Conversation started successfully!', 'success')
             return redirect(url_for('conversations'))
         else:
+            print(f"Error: {response.status_code}, {response.text}")  # Debug log for response
             flash('Failed to start conversation. Please try again.', 'danger')
-            return redirect(url_for('conversations'))
 
-    # If GET request, render the start conversation form
     return render_template('start_conversation.html')
+
+@app.route('/reviews', methods=['GET', 'POST'])
+def reviews():
+    if request.method == 'POST':
+        # Handle form submission for review creation
+        user_id = session.get('id')
+        content = request.form.get('content')
+        rating = request.form.get('rating')
+
+        if not user_id or not content or not rating:
+            flash('All fields must be filled out to submit a review.', 'danger')
+            return redirect(url_for('reviews'))
+
+        review_data = {
+            'user_id': user_id,
+            'content': content,
+            'rating': int(rating)
+        }
+
+        response = requests.post('http://127.0.0.1:8000/reviews', json=review_data)
+
+        if response.status_code == 201:
+            flash('Review submitted successfully!', 'success')
+        else:
+            flash('Failed to submit the review. Please try again.', 'danger')
+
+    return render_template('reviews.html')
+
+@app.route('/submit-review', methods=['POST'])
+def submit_review():
+    user_id = session.get('id')
+    content = request.form.get('content')
+    rating = request.form.get('rating')
+
+    if not user_id or not content or not rating:
+        flash('All fields must be filled out to submit a review.', 'danger')
+        return redirect(url_for('reviews'))
+
+    review_data = {
+        'user_id': user_id,
+        'content': content,
+        'rating': int(rating)
+    }
+
+    response = requests.post('http://127.0.0.1:8000/reviews', json=review_data)
+
+    if response.status_code == 201:
+        flash('Review submitted successfully!', 'success')
+    else:
+        flash('Failed to submit the review. Please try again.', 'danger')
+
+    return redirect(url_for('reviews'))
 
 if __name__ == '__main__':
     subprocess.Popen([sys.executable, "api.py"])

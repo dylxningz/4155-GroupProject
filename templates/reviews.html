@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Reviews{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2>Write A Review</h2>
+
+        <!-- User Reviews Section -->
+        <div class="glass-box mb-4">
+            <h4>Your Review</h4>
+            <div id="user-reviews" class="review-box">
+                <p id="no-reviews-message">No reviews yet.</p>
+            </div>
+        </div>
+
+        <!-- Review Form -->
+        <div class="glass-box">
+            <h4>Submit a Review</h4>
+            <form id="review-form" action="/submit-review" method="post">
+                <div class="form-group">
+                    <label for="review-content">Review:</label>
+                    <textarea id="review-content" name="content" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="rating">Rating (1-5):</label>
+                    <input type="number" id="rating" name="rating" class="form-control" min="1" max="5" required>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Submit Review</button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .review-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+    </style>
+
+    <script>
+        const userId = "{{ session['id'] }}"; // Get user ID from session
+
+        // Fetch and display user's reviews
+        fetch(`http://127.0.0.1:8000/reviews/user/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                const userReviews = document.getElementById('user-reviews');
+                const noReviewsMessage = document.getElementById('no-reviews-message');
+
+                // Clear existing reviews
+                userReviews.innerHTML = '';
+
+                // Check if reviews exist
+                if (data.length === 0) {
+                    noReviewsMessage.style.display = 'block';
+                } else {
+                    noReviewsMessage.style.display = 'none';
+                    data.forEach(review => {
+                        const reviewItem = document.createElement('div');
+                        reviewItem.classList.add('mb-3');
+                        reviewItem.innerHTML = `
+                            <div>
+                                <p><strong>Rating:</strong> ${review.rating}/5</p>
+                                <p>${review.content}</p>
+                                <small>Reviewed on: ${new Date(review.created_at).toLocaleDateString()}</small>
+                            </div>
+                            <hr>
+                        `;
+                        userReviews.appendChild(reviewItem);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user reviews:', error);
+                document.getElementById('no-reviews-message').textContent = 'Error loading reviews. Please try again later.';
+            });
+    </script>
+{% endblock %}

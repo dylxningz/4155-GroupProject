@@ -22,6 +22,8 @@ class MessageResponse(BaseModel):
 class ConversationCreate(BaseModel):
     participant_1: int
     participant_2: int
+    price: float  # Add the price field to match your controller's logic
+
 
 class ConversationResponse(BaseModel):
     id: int

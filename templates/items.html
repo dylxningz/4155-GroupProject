@@ -1,110 +1,144 @@
 {% extends 'base.html' %}
 {% block title %}Items List{% endblock %}
 {% block content %}
-    <div class="container mt-5">
-        <h1 class="text-center item-list-title">Items List</h1>
+<div class="container mt-5">
+    <h1 class="text-center item-list-title">Items List</h1>
 
-        <!-- Container for search filters -->
-        <!-- TODO: Search by "name", "price range", "tag", "seller" -->
-        
-        <details>
-            <summary>Search Filters</summary>
-            <div class="items-search-filters">
-                <div class="item-name">
-                    <label for="item-search-by-name">Item Name:</label>
-                    <input type="search" placeholder="ex. &#34;Calculator&#34;, &#34;Xbox One Controller&#34;" name="item-name" id="item-search-by-name">
-                </div>
-    
-                <div class="price-range">
-                    <label for="item-search-by-price-range">Price Range: $0 <input type="range" name="item-price-range" id="item-search-by-price-range" min="0" max="101" > $<output for="item-search-by-price-range" id="item-price-range-max"></output></label>
-                </div>
-
-                <div class="submit-filter">
-                    <button type="submit" id="ITEM-SEARCH-FILTER-BUTTON">Submit</button>
-                </div>
+    <details>
+        <summary>Search Filters</summary>
+        <div class="items-search-filters">
+            <div class="item-name">
+                <label for="item-search-by-name">Item Name:</label>
+                <input type="search" placeholder="ex. &#34;Calculator&#34;, &#34;Xbox One Controller&#34;" name="item-name" id="item-search-by-name">
             </div>
-        </details>
-        <br>
-        <div class="row" id="items-list">
-            <!-- Items will be dynamically inserted here -->
+            <div class="price-range">
+                <label for="item-search-by-price-range">Price Range: $0 <input type="range" name="item-price-range" id="item-search-by-price-range" min="0" max="101"> $<output for="item-search-by-price-range" id="item-price-range-max"></output></label>
+            </div>
+            <div class="submit-filter">
+                <button type="submit" id="ITEM-SEARCH-FILTER-BUTTON">Submit</button>
+            </div>
         </div>
-    </div>
+    </details>
 
-    <script>
-        // Fetch items from the API
-        fetch('/listings')
+    <br>
+    <div id="items-list" class="custom-grid"></div>
+</div>
+
+<script>
+    function createImageElement(imgData) {
+        if (!imgData) {
+            console.warn("Image data is empty or undefined.");
+            return null;
+        }
+        const imgSrc = imgData.startsWith("data:image/") ? imgData : `data:image/jpeg;base64,${imgData}`;
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = 'Item Image';
+        img.classList.add('item-image');
+        return img;
+    }
+
+    fetch('http://127.0.0.1:8000/listings')
         .then(response => response.json())
         .then(data => {
             const itemsList = document.getElementById('items-list');
             data.forEach(item => {
                 const itemDiv = document.createElement('div');
-                itemDiv.classList.add('col-md-4', 'mb-3');
-                itemDiv.innerHTML = `
-                    <div class="card item-card">
-                        <div class="card-body">
-                            <h5 class="card-title">${item.title}</h5>
-                            <p class="card-text">${item.description}</p>
-                            <p class="card-text">$${item.price}</p>
-                            <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
-                        </div>
-                    </div>
-                `;
-                itemsList.appendChild(itemDiv);
-            });
-        })
-        .catch(error => console.error('Error fetching items:', error));
-    </script>
-    
-    <script>
-        // Script for searching with filters:
-        // Find the slider element along with the element that displays the output of the slider
-        const range_max = document.querySelector("#item-price-range-max");
-        let slider_value = 0;
-        const price_slider = document.querySelector("#item-search-by-price-range");
-        price_slider.addEventListener("input", (event) => {
-            if(event.target.value > 100){
-                range_max.textContent = "100+"
-                slider_value = 101;
-            } else {
-                range_max.textContent = event.target.value;
-                slider_value = event.target.value;
-            }
-        });
-        
-        // Find "Submit" button
-        const submit_button = document.getElementById("ITEM-SEARCH-FILTER-BUTTON");
-        // Add event listener for when "Submit" is clicked and reload itemsList with narrowed search results
-        submit_button.addEventListener("click", (event) => {
-            const item_string = document.getElementById("item-search-by-name").value.toLowerCase();
-            const itemsList = document.getElementById('items-list');
-            
-            // Essentially the same process as originally loading the page...
-            fetch('/listings')
-            .then(response => response.json())
-            .then(data => {
-                // Clear itemsList before serving items from new query!
-                itemsList.innerHTML = "";
-                data.forEach(item => {
-                    // IF the search term is in the listing title or description AND the price slider is set to the appropriate interval
-                    // THEN, create a new div to serve the item in:
-                    if((item.title.toLowerCase().includes(item_string) || item.description.toLowerCase().includes(item_string)) && item.price <= slider_value){
-                        const itemDiv = document.createElement('div');
-                        itemDiv.classList.add('col-md-4', 'mb-3');
+                fetch(`http://127.0.0.1:8000/images/listing/${item.id}`)
+                    .then(async (imagesResponse) => {
+                        if (!imagesResponse.ok) {
+                            console.warn(`Failed to fetch images for listing ID: ${item.id} - Status: ${imagesResponse.status}`);
+                            return [];
+                        }
+                        const contentType = imagesResponse.headers.get("Content-Type") || "";
+                        if (!contentType.includes("application/json")) {
+                            console.error(`Unexpected response type for listing ID: ${item.id}`);
+                            return [];
+                        }
+                        return await imagesResponse.json();
+                    })
+                    .then(imagesData => {
+                        const imageElement = imagesData.length > 0 ? createImageElement(imagesData[0].img_data) : null;
                         itemDiv.innerHTML = `
                             <div class="card item-card">
-                                <div class="card-body">
+                                <div class="card-body text-center">
                                     <h5 class="card-title">${item.title}</h5>
-                                    <p class="card-text">${item.description}</p>
+                                    ${imageElement ? imageElement.outerHTML : '<p>No Image Available</p>'}
                                     <p class="card-text">$${item.price}</p>
                                     <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
                                 </div>
                             </div>
                         `;
                         itemsList.appendChild(itemDiv);
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching or rendering image for item ${item.id}:`, error);
+                        itemDiv.innerHTML = `
+                            <div class="card item-card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">${item.title}</h5>
+                                    <p>No Image Available</p>
+                                    <p class="card-text">$${item.price}</p>
+                                    <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                                </div>
+                            </div>
+                        `;
+                        itemsList.appendChild(itemDiv);
+                    });
+            });
+        })
+        .catch(error => console.error('Error fetching items:', error));
+
+    const rangeMax = document.querySelector("#item-price-range-max");
+    const priceSlider = document.querySelector("#item-search-by-price-range");
+    let sliderValue = 0;
+
+    priceSlider.addEventListener("input", (event) => {
+        if (event.target.value > 100) {
+            rangeMax.textContent = "100+";
+            sliderValue = 101;
+        } else {
+            rangeMax.textContent = event.target.value;
+            sliderValue = event.target.value;
+        }
+    });
+
+    const submitButton = document.getElementById("ITEM-SEARCH-FILTER-BUTTON");
+    submitButton.addEventListener("click", () => {
+        const itemString = document.getElementById("item-search-by-name").value.toLowerCase();
+        const itemsList = document.getElementById('items-list');
+
+        fetch('http://127.0.0.1:8000/listings')
+            .then(response => response.json())
+            .then(data => {
+                itemsList.innerHTML = "";
+                data.forEach(item => {
+                    if ((item.title.toLowerCase().includes(itemString)) && item.price <= sliderValue) {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.classList.add('col-md-4', 'mb-3');
+                        fetch(`http://127.0.0.1:8000/images/listing/${item.id}`)
+                            .then(imagesResponse => imagesResponse.json())
+                            .then(imagesData => {
+                                const imageElement = imagesData.length > 0 ? createImageElement(imagesData[0].img_data) : null;
+                                itemDiv.innerHTML = `
+                                    <div class="card item-card">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">${item.title}</h5>
+                                            ${imageElement ? imageElement.outerHTML : '<p>No Image Available</p>'}
+                                            <p class="card-text">$${item.price}</p>
+                                            <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                                        </div>
+                                    </div>
+                                `;
+                                itemsList.appendChild(itemDiv);
+                            })
+                            .catch(error => {
+                                console.error('Error fetching item images:', error);
+                            });
                     }
-                })
-            })
-        });
-    </script>
+                });
+            });
+    });
+</script>
 
 {% endblock %}

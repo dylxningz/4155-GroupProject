@@ -15,13 +15,12 @@ router = APIRouter(
 
 @router.post("/", response_model=schema.Image, status_code=status.HTTP_201_CREATED)
 def create_image(request: schema.ImageCreate, db: Session = Depends(get_db)):
-    print(f"Received data: {request.dict()}")  # Print incoming data for debugging
+   
     return controller.create(db=db, request=request)
 
 
 @router.get("/listing/{listing_id}", response_model=List[schema.Image])
 def get_images_by_listing(listing_id: int, db: Session = Depends(get_db)):
-    # Query to find listings for a specific user
     listings = db.query(model.Image).filter(model.Image.listing_id == listing_id).all()
 
     if not listings:

@@ -1,0 +1,148 @@
+        .dashboard-container {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            width: 200px;
+            position: fixed;
+            top: 70px;
+            bottom: 0;
+            left: 0;
+            background-color: #f8f9fa;
+        }
+
+        .nav-link {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .nav-link:hover {
+            background-color: #e9ecef;
+            color: #343a40;
+        }
+
+        .dashboard-main {
+            margin-left: 220px;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.56);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: var(--primary-green);
+        }
+
+        .card-title, .card-text {
+            color: var(--primary-green);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            border-color: var(--primary-green);
+        }
+
+        .custom-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .item-card {
+            background-color: var(--primary-green);
+            color: var(--tertiary-white);
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .no-items-message {
+            color: var(--tertiary-white);
+            font-style: italic;
+            text-align: center;
+        }
+
+        .carousel-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            gap: 20px;
+            padding: 10px 0;
+        }
+
+        .carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .carousel-arrow {
+            background: var(--primary-green);
+            color: var(--tertiary-white);
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .left-arrow {
+            left: -10px;
+        }
+
+        .right-arrow {
+            right: -10px;
+        }
+
+        .item-card-container {
+            flex: 0 0 auto;
+            width: 250px;
+        }
+
+        .item-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .carousel-arrow {
+            background: none;
+            color: var(--primary-green);
+            border: none;
+            font-size: 32px;
+            cursor: pointer;
+            padding: 0;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .left-arrow {
+            left: -30px;
+        }
+
+        .right-arrow {
+            right: -30px;
+        }

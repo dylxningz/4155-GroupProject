@@ -1,63 +1,97 @@
 {% extends 'base.html' %}
 {% block title %}Item Details{% endblock %}
 {% block content %}
-    <div class="container mt-5">
-        <a href="/items" class="back-link text-success mb-3">
+<div class="container item-detail-container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="/items" class="item-detail-back-link">
             <i class="fas fa-arrow-left"></i> Back to Items List
         </a>
-        
-        <div class="item-details-container p-4 mt-3">
-            <h1 id="item-title" class="text-center">Item Title</h1>
-            <p id="item-description" class="text-center">Item description</p>
-            <p id="item-price" class="text-center">Price: $<span id="item-price-value"></span></p>
-            <p id="item-author" class="text-center text-muted">Posted by: <span id="item-owner-name"></span></p>
-            
-            <div id="owner-actions" class="text-center mt-4" style="display: none;">
-                <a href="#" id="edit-btn" class="btn btn-warning">Edit</a>
-                <button id="delete-btn" class="btn btn-danger">Delete</button>
-            </div>
+        <div id="owner-actions" style="display: none;">
+            <a href="#" id="edit-btn" class="btn btn-light mr-2">
+                <i class="fas fa-edit text-warning"></i>
+            </a>
+            <button id="delete-btn" class="btn btn-light">
+                <i class="fas fa-trash-alt text-danger"></i>
+            </button>
         </div>
     </div>
 
-    <script>
-        const itemId = window.location.pathname.split('/').pop();
-        const userId = "{{ session['id'] }}"; // Current logged-in user ID
+    <div class="row mb-4">
+        <div id="image-gallery" class="col-md-6 item-detail-gallery">
+            <div class="item-detail-image-container"></div>
+        </div>
+        <div class="col-md-6 item-detail-content">
+            <h1 id="item-title" class="item-detail-title">Item Title</h1>
+            <p id="item-price" class="text-muted">Price: $<span id="item-price-value"></span></p>
+            <p id="item-author" class="text-muted">Posted by: <span id="item-owner-name"></span></p>
+            <button id="message-seller-btn" class="btn btn-success mb-3">Message Seller</button>
+        </div>
+    </div>
 
-        // Fetch item details based on ID
-        fetch(`http://127.0.0.1:8000/listings/${itemId}`)
+    <div class="mt-4">
+        <h4 class="text-success" style="border-bottom: 2px solid var(--primary-green);">Description</h4>
+        <p id="item-description" class="text-left">Item description</p>
+    </div>
+</div>
+
+<script>
+    const itemId = window.location.pathname.split('/').pop();
+    const userId = "{{ session['id'] }}";
+
+    function createImageElement(imgData) {
+        const img = document.createElement('img');
+        img.src = `data:image/jpeg;base64,${imgData}`;
+        img.alt = 'Item Image';
+        img.classList.add('item-detail-image');
+        return img;
+    }
+
+    fetch(`http://127.0.0.1:8000/listings/${itemId}`)
         .then(response => response.json())
         .then(data => {
             document.getElementById('item-title').textContent = data.title;
             document.getElementById('item-description').textContent = data.description;
             document.getElementById('item-price-value').textContent = data.price;
 
-            // Fetch the owner details
             fetch(`http://127.0.0.1:8000/accounts/${data.user_id}`)
-            .then(ownerResponse => ownerResponse.json())
-            .then(ownerData => {
-                document.getElementById('item-owner-name').textContent = ownerData.name;
+                .then(ownerResponse => ownerResponse.json())
+                .then(ownerData => {
+                    document.getElementById('item-owner-name').textContent = ownerData.name;
+                    if (userId == data.user_id) {
+                        document.getElementById('owner-actions').style.display = 'block';
+                        document.getElementById('edit-btn').href = `/edit-item/${itemId}`;
+                    }
+                })
+                .catch(ownerError => console.error('Error fetching owner details:', ownerError));
 
-                // If the logged-in user is the owner of the item, show the edit and delete buttons
-                if (userId == data.user_id) {
-                    document.getElementById('owner-actions').style.display = 'block';
-                    document.getElementById('edit-btn').href = `/edit-item/${itemId}`;
-                }
-            })
-            .catch(ownerError => {
-                console.error('Error fetching owner details:', ownerError);
-            });
+            fetch(`http://127.0.0.1:8000/images/listing/${itemId}`)
+                .then(imagesResponse => imagesResponse.json())
+                .then(imagesData => {
+                    const imageContainer = document.querySelector('.item-detail-image-container');
+                    if (imagesData.length === 0) {
+                        imageContainer.textContent = 'No images available for this item.';
+                    } else {
+                        imagesData.forEach(image => {
+                            const imgElement = createImageElement(image.img_data);
+                            imageContainer.appendChild(imgElement);
+                        });
+                    }
+                })
+                .catch(imagesError => {
+                    console.error('Error fetching item images:', imagesError);
+                    document.querySelector('.item-detail-image-container').textContent = 'Failed to load images.';
+                });
         })
         .catch(error => console.error('Error fetching item details:', error));
 
-        // Handle delete button click
-        document.getElementById('delete-btn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to delete this item?')) {
-                fetch(`http://127.0.0.1:8000/listings/${itemId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
+    document.getElementById('delete-btn').addEventListener('click', function () {
+        if (confirm('Are you sure you want to delete this item?')) {
+            fetch(`http://127.0.0.1:8000/listings/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
                 .then(response => {
                     if (response.ok) {
                         alert('Item deleted successfully');
@@ -66,10 +100,8 @@
                         alert('Error deleting item');
                     }
                 })
-                .catch(error => {
-                    console.error('Error deleting item:', error);
-                });
-            }
-        });
-    </script>
+                .catch(error => console.error('Error deleting item:', error));
+        }
+    });
+</script>
 {% endblock %}

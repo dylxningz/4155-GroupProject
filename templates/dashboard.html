@@ -1,166 +1,146 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=1">
+{% endblock %}
+
 {% block content %}
     <div class="dashboard-container d-flex">
-        <!-- Sidebar Menu -->
         <div class="sidebar bg-light p-3">
             <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link active" href="/create-item">
-                        <i class="fas fa-plus-circle"></i> Create Listing
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/settings">
-                        <i class="fas fa-cog"></i> Settings
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/conversations">
-                        <i class="fas fa-envelope"></i> Messages
-                    </a>
-                </li>                
-                <li class="nav-item">
-                    <a class="nav-link" href="/reviews">
-                        <i class="fas fa-star"></i> Reviews
-                    </a>
-                </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="/create-item">
+                <i class="fas fa-plus-circle"></i> Create Listing
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/settings">
+                <i class="fas fa-cog"></i> Settings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/conversations">
+                <i class="fas fa-envelope"></i> Messages
+                </a>
+            </li>                
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                <i class="fas fa-star"></i> Reviews
+                </a>
+            </li>
             </ul>
         </div>
 
-        <!-- Dashboard Main Content -->
         <div class="dashboard-main container mt-3">
-            <!-- Greeting Section -->
             <div class="greeting-box mb-4">
-                <h3 id="greeting">Good day, {{ session['name'] }}!</h3>
+            <h3 id="greeting">Good day, {{ session['name'] }}!</h3>
             </div>
 
-            <!-- User Listings Section -->
             <div class="glass-box">
-                <h4>Your Listed Items</h4>
-                <div class="row" id="user-items">
-                    <p id="no-items-message" class="no-items-message">You have not listed any items yet.</p>
-                </div>
+            <h4>Your Listed Items</h4>
+            <div class="carousel-container">
+                <button class="carousel-arrow left-arrow" id="user-left-arrow">&#10094;</button>
+                <div id="user-items" class="carousel custom-grid"></div>
+                <button class="carousel-arrow right-arrow" id="user-right-arrow">&#10095;</button>
+            </div>
+            <p id="no-items-message" class="no-items-message">You have not listed any items yet.</p>
             </div>
 
-            <!-- Watched Listings Section -->
-            <div class="glass-box">
-                <h4>Watched Items</h4>
-                <div class="watched-box">
-                    <p>No watched items yet.</p>
-                </div>
+            <div class="glass-box"></div>
+            <h4>Watched Items</h4>
+            <div class="carousel-container">
+                <button class="carousel-arrow left-arrow" id="watched-left-arrow">&#10094;</button>
+                <div id="watched-items" class="carousel custom-grid"></div>
+                <button class="carousel-arrow right-arrow" id="watched-right-arrow">&#10095;</button>
+            </div>
+            <p id="no-watched-items-message" class="no-items-message">No watched items yet.</p>
             </div>
         </div>
-    </div>
+        </div>
 
-    <style>
-        /* Ensure the content starts below the navbar without affecting layout */
-        .dashboard-container {
-            display: flex;
-            margin-top: 20px;
-        }
+        <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentHour = new Date().getHours();
+            const greetingText = document.getElementById('greeting');
+            let greeting = "Good day";
 
-        .sidebar {
-            width: 200px;
-            position: fixed;
-            top: 70px; /* Adjust this value according to your navbar's height */
-            bottom: 0;
-            left: 0;
-            background-color: #f8f9fa;
-        }
-
-        .nav-link {
-            color: #495057;
-            font-weight: 600;
-        }
-
-        .nav-link:hover {
-            background-color: #e9ecef;
-            color: #343a40;
-        }
-
-        .dashboard-main {
-            margin-left: 220px; /* Adjust margin to fit the sidebar */
-        }
-
-        /* Card and button styling */
-        .card {
-            background-color: rgba(255, 255, 255, 0.56); /* Apply the glassy green background */
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            color: var(--primary-green); /* Use the same green for text */
-        }
-
-        .card-title, .card-text {
-            color: var(--primary-green); /* Set text color to green */
-        }
-
-        .btn-primary {
-            background-color: var(--primary-green); /* Apply green to button */
-            border-color: var(--primary-green);
-        }
-    </style>
-
-    <script>
-        // JavaScript to handle greeting based on time of day
-        const currentHour = new Date().getHours();
-        const greetingText = document.getElementById('greeting');
-        let greeting = "Good day";
-        
-        if (currentHour < 12) {
+            if (currentHour < 12) {
             greeting = "Good morning";
-        } else if (currentHour < 18) {
+            } else if (currentHour < 18) {
             greeting = "Good afternoon";
-        } else {
+            } else {
             greeting = "Good evening";
-        }
-        greetingText.textContent = `${greeting}, {{ session['name'] }}!`;  // Use full name
+            }
+            greetingText.textContent = `${greeting}, {{ session['name'] }}!`;
 
-        // Pass session variables to JavaScript safely
-        const userId = "{{ session['id'] }}";   // Get the user ID from the session
+            const fetchListings = (url, containerId, noItemsMessageId, leftArrowId, rightArrowId) => {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                const container = document.getElementById(containerId);
+                const noItemsMessage = document.getElementById(noItemsMessageId);
+                const leftArrow = document.getElementById(leftArrowId);
+                const rightArrow = document.getElementById(rightArrowId);
+                container.innerHTML = '';
 
-        // Fetch the user's listings
-        fetch(`http://127.0.0.1:8000/listings/user/${userId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('No items found or error fetching data');
+                if (data.length <= 4) {
+                    leftArrow.style.display = 'none';
+                    rightArrow.style.display = 'none';
+                } else {
+                    leftArrow.style.display = 'block';
+                    rightArrow.style.display = 'block';
                 }
-                return response.json();
-            })
-            .then(data => {
-                const userItems = document.getElementById('user-items');
-                const noItemsMessage = document.getElementById('no-items-message');
 
-                // Clear the userItems container before appending new items
-                userItems.innerHTML = '';
-
-                // If no items are found, show the message
                 if (data.length === 0) {
                     noItemsMessage.style.display = 'block';
                 } else {
-                    noItemsMessage.style.display = 'none'; // Hide message if there are items
+                    noItemsMessage.style.display = 'none';
                 }
 
-                // If items are found, display them as cards
                 data.forEach(item => {
-                    const itemCard = document.createElement('div');
-                    itemCard.classList.add('col-md-4', 'mb-3');
-                    itemCard.innerHTML = `
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">${item.title}</h5>
-                                <p class="card-text">${item.description}</p>
-                                <p class="card-text">$${item.price}</p>
-                                <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('item-card-container');
+
+                    fetch(`http://127.0.0.1:8000/images/listing/${item.id}`)
+                    .then(imagesResponse => imagesResponse.json())
+                    .then(imagesData => {
+                        const imageElement = imagesData.length > 0
+                        ? `<img src="data:image/jpeg;base64,${imagesData[0].img_data}" alt="Item Image" class="item-image">`
+                        : '<p>No Image Available</p>';
+
+                        itemDiv.innerHTML = `
+                        <div class="card item-card">
+                            <div class="card-body text-center">
+                            <h5 class="card-title">${item.title}</h5>
+                            ${imageElement}
+                            <p class="card-text">$${item.price}</p>
+                            <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
                             </div>
                         </div>
-                    `;
-                    userItems.appendChild(itemCard);
+                        `;
+                        container.appendChild(itemDiv);
+                    })
+                    .catch(error => console.error('Error fetching item images:', error));
                 });
-            })
-            .catch(error => {
-                console.error('Error fetching user items:', error);
-                const noItemsMessage = document.getElementById('no-items-message');
-                noItemsMessage.style.display = 'block';  // Show message if there's an error
-            });
-    </script>
+                })
+                .catch(error => console.error('Error fetching data:', error));
+            };
+
+            fetchListings(`http://127.0.0.1:8000/listings/user/{{ session['id'] }}`, 'user-items', 'no-items-message', 'user-left-arrow', 'user-right-arrow');
+            fetchListings(`http://127.0.0.1:8000/listings/watched/{{ session['id'] }}`, 'watched-items', 'no-watched-items-message', 'watched-left-arrow', 'watched-right-arrow');
+
+            const scrollCarousel = (containerId, direction) => {
+            const container = document.getElementById(containerId);
+            const scrollAmount = 300;
+            container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+            };
+
+            document.getElementById('user-left-arrow').addEventListener('click', () => scrollCarousel('user-items', 'left'));
+            document.getElementById('user-right-arrow').addEventListener('click', () => scrollCarousel('user-items', 'right'));
+            document.getElementById('watched-left-arrow').addEventListener('click', () => scrollCarousel('watched-items', 'left'));
+            document.getElementById('watched-right-arrow').addEventListener('click', () => scrollCarousel('watched-items', 'right'));
+        });
+        </script>
 {% endblock %}

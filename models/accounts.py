@@ -11,4 +11,4 @@ class Account(Base):
     password = Column(String(100), nullable=False)
 
     listings = relationship("Listing", back_populates="account")
-    
+    favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")

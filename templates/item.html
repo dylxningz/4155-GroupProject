@@ -83,11 +83,32 @@ async function fetchOwnerDetails(listingOwnerId) {
 
         if (loggedInUserId === ownerUserId) {
             document.getElementById('owner-actions').classList.remove('hidden');
+            document.getElementById('edit-btn').href = `/edit-item/${itemId}`;
         }
     } catch (error) {
         console.error('Error fetching owner details:', error);
     }
 }
+
+document.getElementById('delete-btn').addEventListener('click', function () {
+    if (confirm('Are you sure you want to delete this item?')) {
+        fetch(`http://127.0.0.1:8000/listings/${itemId}`, {
+    method: 'DELETE',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+})
+    .then(response => {
+        if (response.ok) {
+            console.log('Item deleted successfully');
+            window.location.href = '/items';
+        } else {
+            response.json().then(data => console.error('Error:', data.detail));
+        }
+    })
+    .catch(error => console.error('Error deleting item:', error));
+    }
+});
 
 async function fetchItemImages() {
     try {
@@ -115,8 +136,6 @@ async function checkFavoriteStatus() {
     try {
         const response = await fetch(`http://127.0.0.1:8000/favorites?user_id=${userId}&item_id=${itemId}`);
         const data = await response.json();
-
-        console.log("Favorite check response:", data);
 
         updateFavoriteButton(Array.isArray(data) && data.length > 0);
     } catch (error) {
@@ -179,6 +198,7 @@ async function toggleFavorite() {
         showFlashMessage('An error occurred while updating the favorite status.', 'danger');
     }
 }
+
 document.addEventListener('DOMContentLoaded', fetchItemDetails);
 favoriteBtn.addEventListener('click', toggleFavorite);
 

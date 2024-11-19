@@ -13,4 +13,5 @@ class Listing(Base):
 
     account = relationship("Account", back_populates="listings")
     images = relationship("Image", back_populates="listing")
+    favorited_by = relationship("Favorite", back_populates="item", cascade="all, delete-orphan")
 

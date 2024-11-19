@@ -7,38 +7,38 @@
 {% endblock %}
 
 {% block content %}
-    <div class="dashboard-container d-flex">
-        <div class="sidebar bg-light p-3">
-            <ul class="nav flex-column">
+<div class="dashboard-container d-flex">
+    <div class="sidebar bg-light p-3">
+        <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link active" href="/create-item">
-                <i class="fas fa-plus-circle"></i> Create Listing
+                    <i class="fas fa-plus-circle"></i> Create Listing
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/settings">
-                <i class="fas fa-cog"></i> Settings
+                    <i class="fas fa-cog"></i> Settings
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/conversations">
-                <i class="fas fa-envelope"></i> Messages
-                </a>
-            </li>                
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                <i class="fas fa-star"></i> Reviews
+                    <i class="fas fa-envelope"></i> Messages
                 </a>
             </li>
-            </ul>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-star"></i> Reviews
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="dashboard-main container mt-3">
+        <div class="greeting-box mb-4">
+            <h3 id="greeting">Good day, {{ session['name'] }}!</h3>
         </div>
 
-        <div class="dashboard-main container mt-3">
-            <div class="greeting-box mb-4">
-            <h3 id="greeting">Good day, {{ session['name'] }}!</h3>
-            </div>
-
-            <div class="glass-box">
+        <div class="glass-box">
             <h4>Your Listed Items</h4>
             <div class="carousel-container">
                 <button class="carousel-arrow left-arrow" id="user-left-arrow">&#10094;</button>
@@ -46,9 +46,9 @@
                 <button class="carousel-arrow right-arrow" id="user-right-arrow">&#10095;</button>
             </div>
             <p id="no-items-message" class="no-items-message">You have not listed any items yet.</p>
-            </div>
+        </div>
 
-            <div class="glass-box"></div>
+        <div class="glass-box">
             <h4>Watched Items</h4>
             <div class="carousel-container">
                 <button class="carousel-arrow left-arrow" id="watched-left-arrow">&#10094;</button>
@@ -56,29 +56,29 @@
                 <button class="carousel-arrow right-arrow" id="watched-right-arrow">&#10095;</button>
             </div>
             <p id="no-watched-items-message" class="no-items-message">No watched items yet.</p>
-            </div>
         </div>
-        </div>
+    </div>
+</div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const currentHour = new Date().getHours();
-            const greetingText = document.getElementById('greeting');
-            let greeting = "Good day";
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const currentHour = new Date().getHours();
+    const greetingText = document.getElementById('greeting');
+    let greeting = "Good day";
 
-            if (currentHour < 12) {
-            greeting = "Good morning";
-            } else if (currentHour < 18) {
-            greeting = "Good afternoon";
-            } else {
-            greeting = "Good evening";
-            }
-            greetingText.textContent = `${greeting}, {{ session['name'] }}!`;
+    if (currentHour < 12) {
+        greeting = "Good morning";
+    } else if (currentHour < 18) {
+        greeting = "Good afternoon";
+    } else {
+        greeting = "Good evening";
+    }
+    greetingText.textContent = `${greeting}, {{ session['name'] }}!`;
 
-            const fetchListings = (url, containerId, noItemsMessageId, leftArrowId, rightArrowId) => {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
+    const fetchListings = (url, containerId, noItemsMessageId, leftArrowId, rightArrowId, isFavorite = false) => {
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
                 const container = document.getElementById(containerId);
                 const noItemsMessage = document.getElementById(noItemsMessageId);
                 const leftArrow = document.getElementById(leftArrowId);
@@ -100,47 +100,53 @@
                 }
 
                 data.forEach(item => {
+                    const itemId = isFavorite ? item.item_id : item.id;
                     const itemDiv = document.createElement('div');
                     itemDiv.classList.add('item-card-container');
 
-                    fetch(`http://127.0.0.1:8000/images/listing/${item.id}`)
-                    .then(imagesResponse => imagesResponse.json())
-                    .then(imagesData => {
-                        const imageElement = imagesData.length > 0
-                        ? `<img src="data:image/jpeg;base64,${imagesData[0].img_data}" alt="Item Image" class="item-image">`
-                        : '<p>No Image Available</p>';
+                    fetch(`http://127.0.0.1:8000/listings/${itemId}`)
+                        .then(itemResponse => itemResponse.json())
+                        .then(itemData => {
+                            fetch(`http://127.0.0.1:8000/images/listing/${itemId}`)
+                                .then(imagesResponse => imagesResponse.json())
+                                .then(imagesData => {
+                                    const imageElement = imagesData.length > 0
+                                        ? `<img src="data:image/jpeg;base64,${imagesData[0].img_data}" alt="Item Image" class="item-image">`
+                                        : '<p>No Image Available</p>';
 
-                        itemDiv.innerHTML = `
-                        <div class="card item-card">
-                            <div class="card-body text-center">
-                            <h5 class="card-title">${item.title}</h5>
-                            ${imageElement}
-                            <p class="card-text">$${item.price}</p>
-                            <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
-                            </div>
-                        </div>
-                        `;
-                        container.appendChild(itemDiv);
-                    })
-                    .catch(error => console.error('Error fetching item images:', error));
+                                    itemDiv.innerHTML = `
+                                        <div class="card item-card">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">${itemData.title}</h5>
+                                                ${imageElement}
+                                                <p class="card-text">$${itemData.price}</p>
+                                                <a href="/item/${itemId}" class="btn btn-primary">View Details</a>
+                                            </div>
+                                        </div>
+                                    `;
+                                    container.appendChild(itemDiv);
+                                })
+                                .catch(error => console.error('Error fetching item images:', error));
+                        })
+                        .catch(error => console.error('Error fetching item details:', error));
                 });
-                })
-                .catch(error => console.error('Error fetching data:', error));
-            };
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    };
 
-            fetchListings(`http://127.0.0.1:8000/listings/user/{{ session['id'] }}`, 'user-items', 'no-items-message', 'user-left-arrow', 'user-right-arrow');
-            fetchListings(`http://127.0.0.1:8000/listings/watched/{{ session['id'] }}`, 'watched-items', 'no-watched-items-message', 'watched-left-arrow', 'watched-right-arrow');
+    fetchListings(`http://127.0.0.1:8000/listings/user/{{ session['id'] }}`, 'user-items', 'no-items-message', 'user-left-arrow', 'user-right-arrow');
+    fetchListings(`http://127.0.0.1:8000/favorites?user_id={{ session['id'] }}`, 'watched-items', 'no-watched-items-message', 'watched-left-arrow', 'watched-right-arrow', true);
 
-            const scrollCarousel = (containerId, direction) => {
-            const container = document.getElementById(containerId);
-            const scrollAmount = 300;
-            container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-            };
+    const scrollCarousel = (containerId, direction) => {
+        const container = document.getElementById(containerId);
+        const scrollAmount = 300;
+        container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    };
 
-            document.getElementById('user-left-arrow').addEventListener('click', () => scrollCarousel('user-items', 'left'));
-            document.getElementById('user-right-arrow').addEventListener('click', () => scrollCarousel('user-items', 'right'));
-            document.getElementById('watched-left-arrow').addEventListener('click', () => scrollCarousel('watched-items', 'left'));
-            document.getElementById('watched-right-arrow').addEventListener('click', () => scrollCarousel('watched-items', 'right'));
-        });
-        </script>
+    document.getElementById('user-left-arrow').addEventListener('click', () => scrollCarousel('user-items', 'left'));
+    document.getElementById('user-right-arrow').addEventListener('click', () => scrollCarousel('user-items', 'right'));
+    document.getElementById('watched-left-arrow').addEventListener('click', () => scrollCarousel('watched-items', 'left'));
+    document.getElementById('watched-right-arrow').addEventListener('click', () => scrollCarousel('watched-items', 'right'));
+});
+</script>
 {% endblock %}

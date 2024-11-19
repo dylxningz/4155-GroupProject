@@ -48,19 +48,17 @@
     </nav>
     
     <!-- Flash message section -->
-    <div class="flash-message-container mt-2">
+    <div class="flash-message-container">
         {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
-            <div class="container">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                {% endfor %}
-            </div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
         {% endif %}
         {% endwith %}
     </div>
@@ -79,10 +77,10 @@
     <script>
         function adjustFooter() {
             const footer = document.querySelector('footer');
-            const contentHeight = document.body.offsetHeight; // Total height of the page content
-            const viewportHeight = window.innerHeight; // Viewport height
+            const contentHeight = document.body.offsetHeight; 
+            const viewportHeight = window.innerHeight; 
     
-            // If content is shorter than the viewport, make the footer sticky
+           
             if (contentHeight < viewportHeight) {
                 footer.classList.add('sticky-footer');
             } else {
@@ -90,7 +88,7 @@
             }
         }
     
-        // Run the function on page load and when the window is resized
+
         window.addEventListener('load', adjustFooter);
         window.addEventListener('resize', adjustFooter);
     </script>

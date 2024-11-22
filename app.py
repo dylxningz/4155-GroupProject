@@ -319,35 +319,6 @@ def conversations():
         flash('Failed to retrieve conversations. Please try again.', 'danger')
         return redirect(url_for('dashboard'))
     
-@app.route('/start-conversation', methods=['GET', 'POST'])
-def start_conversation():
-    if request.method == 'POST':
-        participant_2 = request.form.get('participant_2')
-        price = request.form.get('price')
-        participant_1 = session.get('id')  # The logged-in user ID
-
-        if not all([participant_1, participant_2, price]):
-            flash('Participant and price must be provided.', 'danger')
-            return redirect(url_for('start_conversation'))
-
-        conversation_data = {
-            'participant_1': participant_1,
-            'participant_2': participant_2,
-            'price': float(price)
-        }
-
-        print(f"Form data sent: {conversation_data}")  # Debug log
-
-        response = requests.post('http://127.0.0.1:8000/conversations', json=conversation_data)
-
-        if response.status_code == 201:
-            flash('Conversation started successfully!', 'success')
-            return redirect(url_for('conversations'))
-        else:
-            print(f"Error: {response.status_code}, {response.text}")  # Debug log for response
-            flash('Failed to start conversation. Please try again.', 'danger')
-
-    return render_template('start_conversation.html')
 
 @app.route('/reviews', methods=['GET', 'POST'])
 def reviews():
@@ -400,6 +371,94 @@ def submit_review():
         flash('Failed to submit the review. Please try again.', 'danger')
 
     return redirect(url_for('reviews'))
+
+
+@app.route('/start-conversation', methods=['POST'])
+def start_conversation():
+    if 'id' not in session:
+        flash('You need to be logged in to start a conversation.', 'danger')
+        return redirect(url_for('login'))
+
+    participant_1 = session['id']  # Logged-in user
+    participant_2 = request.json.get('participant_2')  # Seller
+    item_id = request.json.get('item_id')  # Item being messaged about
+
+    # Check if conversation exists
+    response = requests.get(f'http://127.0.0.1:8000/conversations/check', params={
+        'user_1': participant_1,
+        'user_2': participant_2,
+        'item_id': item_id
+    })
+
+    if response.status_code == 200:
+        conversation = response.json()
+        if conversation.get('id'):
+            flash('Conversation already exists. Redirecting to chat...', 'info')
+            return redirect(url_for('chat', conversation_id=conversation['id']))
+        else:
+            flash('No existing conversation found, creating new one...', 'info')
+    else:
+        flash('Failed to check for existing conversation.', 'danger')
+
+    # Create a new conversation if none exists
+    response = requests.post('http://127.0.0.1:8000/conversations', json={
+        'participant_1': participant_1,
+        'participant_2': participant_2,
+        'item_id': item_id
+    })
+    if response.status_code == 201:
+        conversation = response.json()
+        flash('Conversation started successfully!', 'success')
+        return redirect(url_for('chat', conversation_id=conversation['id']))
+    else:
+        flash('Failed to start conversation. Please try again.', 'danger')
+        return redirect(url_for('item_detail', item_id=item_id))
+
+
+@app.route('/chat/<int:conversation_id>')
+def chat(conversation_id):
+    if 'id' not in session:
+        flash('You need to log in to view this chat.', 'danger')
+        return redirect(url_for('login'))
+
+    # Fetch the conversation and verify it exists
+    response = requests.get(f'http://127.0.0.1:8000/conversations/{conversation_id}')
+    if response.status_code != 200:
+        flash('Conversation not found.', 'danger')
+        return redirect(url_for('items'))
+
+    conversation = response.json()
+
+    # Determine the other participant
+    other_user_id = (
+        conversation['participant_1']
+        if conversation['participant_1'] != session['id']
+        else conversation['participant_2']
+    )
+
+    # Fetch the other user's details
+    other_user_response = requests.get(f'http://127.0.0.1:8000/accounts/{other_user_id}')
+    if other_user_response.status_code != 200:
+        other_user_name = 'Unknown'
+        flash('Could not fetch the other user\'s details.', 'warning')
+    else:
+        other_user_name = other_user_response.json()['name']
+
+    # Get item_id from the conversation
+    item_id = conversation.get('item_id')
+
+    # Get seller_id from the other participant (the one who created the listing)
+    seller_id = (
+        conversation['participant_1'] if conversation['participant_1'] != session['id'] else conversation['participant_2']
+    )
+
+    return render_template(
+        'chat.html',
+        conversation_id=conversation_id,
+        other_user_name=other_user_name,
+        seller_id=seller_id,  # Pass seller ID
+        item_id=item_id       # Pass item ID
+    )
 
 if __name__ == '__main__':
     subprocess.Popen([sys.executable, "api.py"])

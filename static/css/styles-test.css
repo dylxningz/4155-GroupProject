@@ -351,3 +351,39 @@ footer {
     object-fit: cover; /* Ensures the image fills the container without distortion */
     border-radius: 8px;
 }
+
+.chat-box {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 10px;
+}
+
+.message.you {
+    text-align: right;
+}
+
+.message.them {
+    text-align: left;
+}
+
+.message .sender {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.message .content {
+    font-size: 1rem;
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    max-width: 70%;
+}

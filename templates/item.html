@@ -7,15 +7,18 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <a href="/items" class="item-detail-back-link">
             <i class="fas fa-arrow-left"></i> Back to Items List
-        </a>
-        <div id="owner-actions" style="display: none;">
+        </a>     
+        <div id="owner-actions" class="d-flex align-items-center hidden">
             <a href="#" id="edit-btn" class="btn btn-light mr-2">
                 <i class="fas fa-edit text-warning"></i>
             </a>
-            <button id="delete-btn" class="btn btn-light">
+            <button id="delete-btn" class="btn btn-light mr-2">
                 <i class="fas fa-trash-alt text-danger"></i>
             </button>
         </div>
+        <button id="favorite-btn" class="btn btn-light ml-2">
+            <i id="favorite-icon" class="far fa-heart text-danger"></i>
+        </button>
     </div>
 
     <div class="row mb-4">
@@ -37,17 +40,125 @@
 </div>
 
 <script>
-    const itemId = window.location.pathname.split('/').pop(); 
-    const userId = "{{ session['id'] }}"; 
 
-   
-    function createImageElement(imgData) {
-        const img = document.createElement('img');
-        img.src = `data:image/jpeg;base64,${imgData}`;
-        img.alt = 'Item Image';
-        img.classList.add('item-detail-image');
-        return img;
+const itemId = window.location.pathname.split('/').pop();
+const userId = "{{ session['id'] }}";
+const favoriteBtn = document.getElementById('favorite-btn');
+
+function createImageElement(imgData) {
+    const img = document.createElement('img');
+    img.src = `data:image/jpeg;base64,${imgData}`;
+    img.alt = 'Item Image';
+    img.classList.add('item-detail-image');
+    return img;
+}
+
+async function fetchItemDetails() {
+    try {
+        const itemResponse = await fetch(`http://127.0.0.1:8000/listings/${itemId}`);
+        const itemData = await itemResponse.json();
+
+        document.getElementById('item-title').textContent = itemData.title;
+        document.getElementById('item-description').textContent = itemData.description;
+        document.getElementById('item-price-value').textContent = itemData.price;
+
+        const listingOwnerId = itemData.user_id;
+        fetchOwnerDetails(listingOwnerId);
+
+        fetchItemImages();
+        checkFavoriteStatus();
+    } catch (error) {
+        console.error('Error fetching item details:', error);
     }
+}
+
+async function fetchOwnerDetails(listingOwnerId) {
+    try {
+        document.getElementById('owner-actions').style.display = 'none';
+
+        const response = await fetch(`http://127.0.0.1:8000/accounts/${listingOwnerId}`);
+        const ownerData = await response.json();
+
+        document.getElementById('item-owner-name').textContent = ownerData.name;
+
+        const loggedInUserId = parseInt(userId, 10);
+        const ownerUserId = parseInt(listingOwnerId, 10);
+
+        if (loggedInUserId === ownerUserId) {
+            document.getElementById('owner-actions').classList.remove('hidden');
+            document.getElementById('edit-btn').href = `/edit-item/${itemId}`;
+        }
+    } catch (error) {
+        console.error('Error fetching owner details:', error);
+    }
+}
+
+document.getElementById('delete-btn').addEventListener('click', function () {
+    if (confirm('Are you sure you want to delete this item?')) {
+        fetch(`http://127.0.0.1:8000/listings/${itemId}`, {
+    method: 'DELETE',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+})
+    .then(response => {
+        if (response.ok) {
+            console.log('Item deleted successfully');
+            window.location.href = '/items';
+        } else {
+            response.json().then(data => console.error('Error:', data.detail));
+        }
+    })
+    .catch(error => console.error('Error deleting item:', error));
+    }
+});
+
+async function fetchItemImages() {
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/images/listing/${itemId}`);
+        const imagesData = await response.json();
+        const imageContainer = document.querySelector('.item-detail-image-container');
+
+        imageContainer.innerHTML = '';
+
+        if (imagesData.length === 0) {
+            imageContainer.textContent = 'No images available for this item.';
+        } else {
+            imagesData.forEach(image => {
+                const imgElement = createImageElement(image.img_data);
+                imageContainer.appendChild(imgElement);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching item images:', error);
+        document.querySelector('.item-detail-image-container').textContent = 'Failed to load images.';
+    }
+}
+
+async function checkFavoriteStatus() {
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/favorites?user_id=${userId}&item_id=${itemId}`);
+        const data = await response.json();
+
+        updateFavoriteButton(Array.isArray(data) && data.length > 0);
+    } catch (error) {
+        console.error('Error checking favorite status:', error);
+    }
+}
+
+function updateFavoriteButton(isFavorited) {
+    const favoriteIcon = document.getElementById('favorite-icon');
+
+    if (isFavorited) {
+        favoriteIcon.classList.remove('far');
+        favoriteIcon.classList.add('fas');
+    } else {
+        favoriteIcon.classList.remove('fas');
+        favoriteIcon.classList.add('far');
+
+    }
+}
+
 
 
     fetch(`http://127.0.0.1:8000/listings/${itemId}`)
@@ -149,6 +260,54 @@ messageSellerButton.addEventListener("click", () => {
     .catch(error => console.error('Error starting conversation:', error));
 });
 
-</script>
 
+function showFlashMessage(message, category) {
+    const flashContainer = document.createElement('div');
+    flashContainer.className = `alert alert-${category} mt-3`;
+    flashContainer.textContent = message;
+
+    const mainContainer = document.querySelector('.container');
+    mainContainer.prepend(flashContainer);
+
+    setTimeout(() => {
+        flashContainer.remove();
+    }, 3000);
+}
+
+async function toggleFavorite() {
+    const isCurrentlyFavorited = document.getElementById('favorite-icon').classList.contains('fas');
+    const url = isCurrentlyFavorited
+        ? `http://127.0.0.1:8000/unfavorite`
+        : `http://127.0.0.1:8000/favorite`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId, item_id: itemId })
+        });
+
+        if (response.ok) {
+            updateFavoriteButton(!isCurrentlyFavorited);
+            showFlashMessage(
+                isCurrentlyFavorited ? 'Item unfavorited successfully!' : 'Item favorited successfully!',
+                'success'
+            );
+        } else {
+            const errorData = await response.json();
+            showFlashMessage(`Failed: ${errorData.detail}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Error toggling favorite status:', error);
+        showFlashMessage('An error occurred while updating the favorite status.', 'danger');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', fetchItemDetails);
+favoriteBtn.addEventListener('click', toggleFavorite);
+
+</script>
 {% endblock %}
+

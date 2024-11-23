@@ -3,6 +3,8 @@ import requests
 from flask import flash, redirect, url_for
 import sys
 import subprocess
+from models.favorite import Favorite
+from dependencies.database import db
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey' 
@@ -358,6 +360,7 @@ def submit_review():
     return redirect(url_for('reviews'))
 
 
+
 @app.route('/start-conversation', methods=['POST'])
 def start_conversation():
     if 'id' not in session:
@@ -443,6 +446,23 @@ def conversations():
         flash('You need to be logged in to view conversations.', 'danger')
         return redirect(url_for('login'))
     return render_template('conversations.html', user_id=session['id'])
+
+@app.route('/favorite', methods=['POST'])
+def add_favorite():
+    data = request.json
+    user_id = data.get('user_id')
+    item_id = data.get('item_id')
+
+    existing_favorite = Favorite.query.filter_by(user_id=user_id, item_id=item_id).first()
+    if existing_favorite:
+        return jsonify({"message": "Item already favorited"}), 409
+
+    new_favorite = Favorite(user_id=user_id, item_id=item_id)
+    db.session.add(new_favorite)
+    db.session.commit()
+
+    return jsonify({"message": "Item favorited successfully"}), 201
+
 
 if __name__ == '__main__':
     subprocess.Popen([sys.executable, "api.py"])

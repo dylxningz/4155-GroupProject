@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+
 {% block title %}Item Details{% endblock %}
+
 {% block content %}
 <div class="container item-detail-container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -38,6 +40,7 @@
 </div>
 
 <script>
+
 const itemId = window.location.pathname.split('/').pop();
 const userId = "{{ session['id'] }}";
 const favoriteBtn = document.getElementById('favorite-btn');
@@ -152,8 +155,111 @@ function updateFavoriteButton(isFavorited) {
     } else {
         favoriteIcon.classList.remove('fas');
         favoriteIcon.classList.add('far');
+
     }
 }
+
+
+
+    fetch(`http://127.0.0.1:8000/listings/${itemId}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch item details: ${response.statusText}`);
+            return response.json();
+        })
+        .then(data => {
+
+            document.getElementById('item-title').textContent = data.title;
+            document.getElementById('item-description').textContent = data.description;
+            document.getElementById('item-price-value').textContent = data.price;
+
+            return fetch(`http://127.0.0.1:8000/accounts/${data.user_id}`)
+                .then(ownerResponse => {
+                    if (!ownerResponse.ok) throw new Error(`Failed to fetch owner details: ${ownerResponse.statusText}`);
+                    return ownerResponse.json();
+                })
+                .then(ownerData => {
+                   
+                    document.getElementById('item-owner-name').textContent = ownerData.name;
+                    document.getElementById('item-owner-name').dataset.ownerId = ownerData.id;
+
+                    if (userId == data.user_id) {
+                        document.getElementById('owner-actions').style.display = 'block';
+                        document.getElementById('edit-btn').href = `/edit-item/${itemId}`;
+                    }
+                });
+        })
+        .then(() => {
+            // Fetch item images
+            return fetch(`http://127.0.0.1:8000/images/listing/${itemId}`);
+        })
+        .then(imagesResponse => {
+            if (!imagesResponse.ok) throw new Error(`Failed to fetch images: ${imagesResponse.statusText}`);
+            return imagesResponse.json();
+        })
+        .then(imagesData => {
+            const imageContainer = document.querySelector('.item-detail-image-container');
+            if (imagesData.length === 0) {
+                imageContainer.textContent = 'No images available for this item.';
+            } else {
+                imagesData.forEach(image => {
+                    const imgElement = createImageElement(image.img_data);
+                    imageContainer.appendChild(imgElement);
+                });
+            }
+        })
+        .catch(error => console.error(error.message));
+
+    document.getElementById('delete-btn').addEventListener('click', function () {
+        if (confirm('Are you sure you want to delete this item?')) {
+            fetch(`http://127.0.0.1:8000/listings/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Item deleted successfully');
+                        window.location.href = '/items';
+                    } else {
+                        alert('Error deleting item');
+                    }
+                })
+                .catch(error => console.error('Error deleting item:', error));
+        }
+    });
+
+    const messageSellerButton = document.getElementById('message-seller-btn');
+
+messageSellerButton.addEventListener("click", () => {
+    const sellerId = document.getElementById('item-owner-name').dataset.ownerId;
+    if (!sellerId) {
+        alert('Error: Unable to identify the seller.');
+        return;
+    }
+
+    fetch('http://127.0.0.1:8000/conversations/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            participant_1: userId,
+            participant_2: sellerId,
+            item_id: itemId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.id) {
+            window.location.href = `/chat/${data.id}`;
+        } else {
+            alert('Failed to start a conversation.');
+        }
+    })
+    .catch(error => console.error('Error starting conversation:', error));
+});
+
 
 function showFlashMessage(message, category) {
     const flashContainer = document.createElement('div');
@@ -204,3 +310,4 @@ favoriteBtn.addEventListener('click', toggleFavorite);
 
 </script>
 {% endblock %}
+

@@ -12,7 +12,7 @@
                 <input type="search" placeholder="ex. &#34;Calculator&#34;, &#34;Xbox One Controller&#34;" name="item-name" id="item-search-by-name">
             </div>
             <div class="price-range">
-                <label for="item-search-by-price-range">Price Range: $0 <input type="range" name="item-price-range" id="item-search-by-price-range" min="0" max="101"> $<output for="item-search-by-price-range" id="item-price-range-max"></output></label>
+                <label for="item-search-by-price-range">Price Range: $0 - $<input type="number" for="item-search-by-price-range" id="item-price-range-max" min="0" max="501"></input></label>
             </div>
             <div class="submit-filter">
                 <button type="submit" id="ITEM-SEARCH-FILTER-BUTTON">Submit</button>
@@ -89,20 +89,9 @@
         })
         .catch(error => console.error('Error fetching items:', error));
 
+        
+        
     const rangeMax = document.querySelector("#item-price-range-max");
-    const priceSlider = document.querySelector("#item-search-by-price-range");
-    let sliderValue = 0;
-
-    priceSlider.addEventListener("input", (event) => {
-        if (event.target.value > 100) {
-            rangeMax.textContent = "100+";
-            sliderValue = 101;
-        } else {
-            rangeMax.textContent = event.target.value;
-            sliderValue = event.target.value;
-        }
-    });
-
     const submitButton = document.getElementById("ITEM-SEARCH-FILTER-BUTTON");
     submitButton.addEventListener("click", () => {
         const itemString = document.getElementById("item-search-by-name").value.toLowerCase();
@@ -113,9 +102,8 @@
             .then(data => {
                 itemsList.innerHTML = "";
                 data.forEach(item => {
-                    if ((item.title.toLowerCase().includes(itemString)) && item.price <= sliderValue) {
+                    if ((item.title.toLowerCase().includes(itemString)) && item.price <= rangeMax.value) {
                         const itemDiv = document.createElement('div');
-                        itemDiv.classList.add('col-md-4', 'mb-3');
                         fetch(`http://127.0.0.1:8000/images/listing/${item.id}`)
                             .then(imagesResponse => imagesResponse.json())
                             .then(imagesData => {

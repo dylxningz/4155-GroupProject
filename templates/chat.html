@@ -3,22 +3,38 @@
 {% block title %}Chat{% endblock %}
 
 {% block content %}
-<div class="container chat-container mt-4">
-    <h2>Chat with {{ other_user_name }}</h2>
-    <button id="message-seller-button" class="btn btn-primary mt-3">Message Seller</button>
-    <div id="chat-box" class="chat-box">
-        <div class="message you">
-            <div class="sender">You</div>
-            <div class="content">Hi, how are you?</div>
+<div class="container-fluid chat-page">
+    <div class="row">
+        <!-- Item Information Card -->
+        <div class="col-md-4 item-card-container">
+            <a href="/item/{{ item_id }}" class="card-link">
+                <div id="item-details-card" class="card item-card">
+                    <div id="item-image-container" class="item-image-container">
+                        <!-- Image will be dynamically populated here -->
+                    </div>
+                    <div class="card-body">
+                        <h5 id="item-title" class="card-title">Loading item details...</h5>
+                        <p id="item-price" class="card-text"></p>
+                        <p id="item-description" class="card-text"></p>
+                        <p id="item-owner" class="card-text"></p>
+                    </div>
+                </div>
+            </a>
         </div>
-        <div class="message them">
-            <div class="sender">{{ other_user_name }}</div>
-            <div class="content">I'm good, thanks!</div>
+
+        <!-- Chat Box -->
+        <div class="col-md-8 chat-container">
+            <h2>Chat with {{ other_user_name }}</h2>
+            <div id="chat-box" class="chat-box">
+                <!-- Chat messages will be dynamically populated -->
+            </div>
+            <div class="chat-input-container">
+                <input type="text" id="message-input" class="form-control" placeholder="Type a message...">
+                <button id="send-button" class="send-button">
+                    <i class="fas fa-arrow-right"></i> Send
+                </button>
+            </div>
         </div>
-    </div>
-    <div class="chat-input-container mt-3">
-        <input type="text" id="message-input" class="form-control" placeholder="Type a message...">
-        <button id="send-button" class="btn btn-primary mt-2">Send</button>
     </div>
 </div>
 {% endblock %}
@@ -28,28 +44,17 @@
 document.addEventListener("DOMContentLoaded", function () {
     const conversationId = "{{ conversation_id }}";
     const userId = "{{ session['id'] }}";
-    const otherUserName = "{{ other_user_name }}";
-    const sellerId = "{{ seller_id }}";
-    const itemId = "{{ item_id }}";
     const wsUrl = `ws://127.0.0.1:8000/conversations/ws/${conversationId}?user_id=${userId}`;
+    const itemId = "{{ item_id }}";
 
     const chatBox = document.getElementById('chat-box');
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
-    const messageSellerButton = document.getElementById('message-seller-button');
+    const itemImageContainer = document.getElementById('item-image-container');
 
-    if (!chatBox || !messageInput || !sendButton || !messageSellerButton) {
-        console.error("Required DOM elements are missing");
-        return;
-    }
-
+    // Initialize WebSocket
     let ws;
     function initWebSocket() {
-        if (!wsUrl) {
-            console.error("WebSocket URL is undefined");
-            return;
-        }
-        
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
@@ -79,28 +84,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const messageElement = document.createElement('div');
         messageElement.classList.add('message', data.sender_id == userId ? 'you' : 'them');
         messageElement.innerHTML = `
-            <div class="sender">${data.sender_id == userId ? 'You' : otherUserName}</div>
+            <div class="sender">${data.sender_id == userId ? 'You' : '{{ other_user_name }}'}</div>
             <div class="content">${data.message_body}</div>
         `;
         chatBox.appendChild(messageElement);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    fetch(`http://127.0.0.1:8000/conversations/${conversationId}/messages`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to load messages: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(messages => {
-            messages.forEach(message => appendMessage(message));
-        })
-        .catch(error => {
-            console.error("Failed to load messages:", error);
-        });
-
-    sendButton.addEventListener('click', () => {
+    function sendMessage() {
         if (!ws || ws.readyState !== WebSocket.OPEN) {
             alert("WebSocket is not connected. Please try again.");
             return;
@@ -120,34 +111,71 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Failed to send message:", error);
         }
+    }
+
+    // Fetch item details
+    fetch(`http://127.0.0.1:8000/listings/${itemId}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch item details: ${response.statusText}`);
+            return response.json();
+        })
+        .then(itemData => {
+            document.getElementById('item-title').textContent = itemData.title;
+            document.getElementById('item-price').textContent = `Price: $${itemData.price}`;
+            document.getElementById('item-description').textContent = itemData.description;
+
+            // Fetch seller details
+            return fetch(`http://127.0.0.1:8000/accounts/${itemData.user_id}`);
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch seller details: ${response.statusText}`);
+            return response.json();
+        })
+        .then(ownerData => {
+            document.getElementById('item-owner').textContent = `Seller: ${ownerData.name}`;
+        })
+        .catch(error => console.error(error.message));
+
+    // Fetch item images
+    fetch(`http://127.0.0.1:8000/images/listing/${itemId}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch images: ${response.statusText}`);
+            return response.json();
+        })
+        .then(imagesData => {
+            if (imagesData.length > 0) {
+                const img = document.createElement('img');
+                img.src = `data:image/jpeg;base64,${imagesData[0].img_data}`;
+                img.classList.add('item-image');
+                img.alt = 'Item Image';
+                itemImageContainer.appendChild(img);
+            } else {
+                itemImageContainer.textContent = 'No image available.';
+            }
+        })
+        .catch(error => console.error(error.message));
+
+    // Fetch chat messages
+    fetch(`http://127.0.0.1:8000/conversations/${conversationId}/messages`)
+        .then(response => response.json())
+        .then(messages => {
+            messages.forEach(message => appendMessage(message));
+        })
+        .catch(error => console.error("Failed to load messages:", error));
+
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+            e.preventDefault();
+        }
     });
 
     initWebSocket();
-
-    messageSellerButton.addEventListener("click", () => {
-        const data = {
-            participant_2: sellerId,
-            item_id: itemId,
-        };
-
-        fetch('/start-conversation', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.id) {
-                window.location.href = `/chat/${data.id}`;
-            } else {
-                console.error("Failed to find or create conversation.");
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    });
 });
 </script>
 {% endblock %}
+
+
 

@@ -97,7 +97,9 @@ def get_messages(conversation_id: int, db: Session = Depends(get_db)):
     messages = db.query(Message).filter(Message.conversation_id == conversation_id).order_by(Message.created_at).all()
     return messages
 
-@router.get("/test")
-def test_check():
-    print("Test route triggered!")
-    return {"status": "ok"}
+@router.get("/user/{user_id}")
+def get_user_conversations(user_id: int, db: Session = Depends(get_db)):
+    conversations = db.query(Conversation).filter(
+        (Conversation.participant_1 == user_id) | (Conversation.participant_2 == user_id)
+    ).all()
+    return conversations

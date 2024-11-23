@@ -303,22 +303,7 @@ def get_listing(item_id):
     # Assuming you're making a request to the FastAPI backend here
     response = requests.get(f'http://127.0.0.1:8000/listings/{item_id}')
     return jsonify(response.json())
-@app.route('/conversations')
-def conversations():
-    user_id = session.get('id')
-    if not user_id:
-        flash('You need to be logged in to view conversations.', 'danger')
-        return redirect(url_for('login'))
 
-    response = requests.get(f'http://127.0.0.1:8000/conversations/?user_id={user_id}')
-    
-    if response.status_code == 200:
-        conversations = response.json()
-        return render_template('conversations.html', conversations=conversations)
-    else:
-        flash('Failed to retrieve conversations. Please try again.', 'danger')
-        return redirect(url_for('dashboard'))
-    
 
 @app.route('/reviews', methods=['GET', 'POST'])
 def reviews():
@@ -382,8 +367,6 @@ def start_conversation():
     participant_1 = session['id']  # Logged-in user
     participant_2 = request.json.get('participant_2')  # Seller
     item_id = request.json.get('item_id')  # Item being messaged about
-
-    # Check if conversation exists
     response = requests.get(f'http://127.0.0.1:8000/conversations/check', params={
         'user_1': participant_1,
         'user_2': participant_2,
@@ -400,7 +383,6 @@ def start_conversation():
     else:
         flash('Failed to check for existing conversation.', 'danger')
 
-    # Create a new conversation if none exists
     response = requests.post('http://127.0.0.1:8000/conversations', json={
         'participant_1': participant_1,
         'participant_2': participant_2,
@@ -421,7 +403,6 @@ def chat(conversation_id):
         flash('You need to log in to view this chat.', 'danger')
         return redirect(url_for('login'))
 
-    # Fetch the conversation and verify it exists
     response = requests.get(f'http://127.0.0.1:8000/conversations/{conversation_id}')
     if response.status_code != 200:
         flash('Conversation not found.', 'danger')
@@ -429,14 +410,12 @@ def chat(conversation_id):
 
     conversation = response.json()
 
-    # Determine the other participant
     other_user_id = (
         conversation['participant_1']
         if conversation['participant_1'] != session['id']
         else conversation['participant_2']
     )
 
-    # Fetch the other user's details
     other_user_response = requests.get(f'http://127.0.0.1:8000/accounts/{other_user_id}')
     if other_user_response.status_code != 200:
         other_user_name = 'Unknown'
@@ -444,10 +423,8 @@ def chat(conversation_id):
     else:
         other_user_name = other_user_response.json()['name']
 
-    # Get item_id from the conversation
     item_id = conversation.get('item_id')
 
-    # Get seller_id from the other participant (the one who created the listing)
     seller_id = (
         conversation['participant_1'] if conversation['participant_1'] != session['id'] else conversation['participant_2']
     )
@@ -456,9 +433,16 @@ def chat(conversation_id):
         'chat.html',
         conversation_id=conversation_id,
         other_user_name=other_user_name,
-        seller_id=seller_id,  # Pass seller ID
-        item_id=item_id       # Pass item ID
+        seller_id=seller_id,
+        item_id=item_id
     )
+
+@app.route('/conversations')
+def conversations():
+    if 'id' not in session:
+        flash('You need to be logged in to view conversations.', 'danger')
+        return redirect(url_for('login'))
+    return render_template('conversations.html', user_id=session['id'])
 
 if __name__ == '__main__':
     subprocess.Popen([sys.executable, "api.py"])

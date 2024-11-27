@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status, Response, Depends
+from fastapi import HTTPException, status, Response, Depends, exceptions
 from models import accounts as model
 from sqlalchemy.exc import SQLAlchemyError
 from passlib.context import CryptContext
@@ -26,6 +26,8 @@ def create(db: Session, request):
         db.add(new_item)
         db.commit()
         db.refresh(new_item)
+    except exceptions.ResponseValidationError as e:
+        new_item.id = 0
     except SQLAlchemyError as e:
         error = str(e.__dict__['orig'])
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)

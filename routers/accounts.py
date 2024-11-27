@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, exceptions
 from sqlalchemy.orm import Session
 from controllers import accounts as controller
 from schemas import accounts as schema
@@ -39,7 +39,8 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
 # Create new account
 @router.post("/", response_model=schema.Account)
 def create(request: schema.AccountCreate, db: Session = Depends(get_db)):
-    return controller.create(db=db, request=request)
+    new_account = controller.create(db, request)
+    return new_account
 
 # Update account profile (name and email)
 @router.put("/{user_id}", response_model=schema.Account)

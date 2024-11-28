@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, FastAPI, status, Response, HTTPException
 from sqlalchemy.orm import Session
-from controllers import images as controller
+from controllers import tags as controller
 from schemas import tags as schema
 from dependencies.database import engine, get_db
 from fastapi.security import OAuth2PasswordRequestForm

@@ -12,9 +12,6 @@ class Listing(Base):
     price = Column(Float, nullable=False)
 
     account = relationship("Account", back_populates="listings")
-    images = relationship(
-        "Image", back_populates="listing", cascade="all, delete-orphan"
-    )  
-    favorited_by = relationship(
-        "Favorite", back_populates="item", cascade="all, delete-orphan"
-    )  
+    images = relationship("Image", back_populates="listing", cascade="all, delete-orphan")
+    favorited_by = relationship("Favorite", back_populates="item", cascade="all, delete-orphan")
+    tags = relationship("Tag", back_populates="listing")

@@ -7,6 +7,6 @@ class Tag(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"))  # Enable cascade delete
-    img_data = Column(String(150), nullable=False)
+    tag = Column(String(150), nullable=False)
 
     listing = relationship("Listing", back_populates="tags")

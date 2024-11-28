@@ -7,7 +7,7 @@ class TagCreate(BaseModel):
 class TagResponse(BaseModel):
     id: int
     tag: str
-    item_id: int
+    listing_id: int
 
     class Config:
         orm_mode = True

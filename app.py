@@ -3,8 +3,7 @@ import requests
 from flask import flash, redirect, url_for
 import sys
 import subprocess
-from models.favorite import Favorite
-from dependencies.database import db
+
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey' 
@@ -52,26 +51,53 @@ def index():
 def test_session():
     return jsonify(dict(session))
 
-@app.route('/signup', methods=['GET', 'POST'])
+@app.route('/verify-email', methods=['GET', 'POST'])
+def verify_email():
+    if request.method == 'GET':
+        return render_template("verify_email.html")
+
+    # Handle POST request for verification
+    email = request.form.get('email')
+    code = request.form.get('code')
+
+    if not email or not code:
+        flash('Email and verification code are required.', 'danger')
+        return redirect(url_for('verify_email'))
+
+    # Forward the query parameters to FastAPI
+    response = requests.post(f'http://127.0.0.1:8000/accounts/verify?email={email}&code={code}')
+
+    if response.status_code == 200:
+        flash('Email verified successfully!', 'success')
+        return redirect(url_for('login'))
+    else:
+        flash(f"Verification failed: {response.json().get('detail', 'Unknown error')}", 'danger')
+        return redirect(url_for('verify_email'))
+
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
 
-        response = requests.post('http://127.0.0.1:8000/accounts', json={
-            'name': name,
-            'email': email,
-            'password': password
-        })
+        if not email.endswith("@charlotte.edu"):
+            flash("Only @charlotte.edu emails are allowed.", "danger")
+            return redirect(url_for("signup"))
 
-        if response.status_code == 201:
-            flash('Sign-up successful! Please log in.')
-            return redirect(url_for('login'))
+        response = requests.post(
+            "http://127.0.0.1:8000/accounts/",
+            json={"name": name, "email": email, "password": password},
+        )
+
+        if response.status_code == 200:
+            flash("Sign-up successful! Check your email for the verification code.", "success")
+            return redirect(url_for("verify_email", email=email))
         else:
-            flash('Sign-up failed. Please try again.')
+            flash(response.json().get("detail", "Sign-up failed."), "danger")
+            return redirect(url_for("signup"))
 
-    return render_template('signup.html')
+    return render_template("signup.html")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

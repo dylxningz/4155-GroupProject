@@ -14,9 +14,12 @@ router = APIRouter(
 # Login route
 @router.post("/login")
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    print("FastAPI login endpoint hit")
     account = controller.get_account_by_email(db, request.username)
+    print(f"Account fetched: {account}")
 
     if not account or not controller.verify_password(request.password, account.password):
+        print("Invalid credentials")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
@@ -24,13 +27,14 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
         )
 
     if not account.is_verified:
+        print("Account not verified")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email not verified",
         )
 
+    print("Login successful")
     return {"id": account.id, "name": account.name, "email": account.email}
-
 # Create new account (signup)
 @router.post("/", response_model=schema.Account)
 def create(request: schema.AccountCreate, db: Session = Depends(get_db)):

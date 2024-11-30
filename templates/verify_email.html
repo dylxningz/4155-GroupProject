@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Verify Email{% endblock %}
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <!-- Encasing verification title and form within the box -->
+                <div class="login-container">
+                    <h2 class="login-title text-center">Email Verification</h2>
+                    <form id="verifyForm" method="POST">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="code">Verification Code</label>
+                            <input type="text" class="form-control" id="code" name="code" placeholder="Enter the 6-digit code" required>
+                        </div>
+                        <button type="submit" class="btn login-btn btn-block">Verify</button>
+                    </form>
+                    <script>
+                        document.getElementById("verifyForm").addEventListener("submit", function(event) {
+                            event.preventDefault(); // Prevent form from refreshing the page
+                            
+                            const email = document.getElementById('email').value;
+                            const code = document.getElementById('code').value;
+
+                            // Prepare data for verification
+                            const params = new URLSearchParams({ email: email, code: code });
+
+                            // Send verification data to FastAPI
+                            fetch('http://127.0.0.1:8000/accounts/verify?' + params.toString(), {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                }
+                            })
+                            .then(response => {
+                                console.log(`FastAPI Response Status: ${response.status}`);
+                                if (response.ok) {
+                                    alert('Email verified successfully!');
+                                    window.location.href = '/login'; // Redirect to login page
+                                } else {
+                                    return response.json().then(err => {
+                                        throw new Error(err.detail || 'Verification failed');
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Error: ' + error.message);
+                            });
+                        });
+                    </script>
+                    <p class="text-center mt-3">
+                        Didn't receive the code? 
+                        <a href="/resend-verification">Resend Code</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

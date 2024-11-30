@@ -18,52 +18,57 @@
                         </div>
                         <button type="submit" class="btn login-btn">Login</button>
                     </form>
-
                     <script>
-document.getElementById("loginForm").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent form from refreshing the page
-
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    // Prepare data for login
-    const formData = new URLSearchParams();
-    formData.append("username", email);  // FastAPI expects username instead of email
-    formData.append("password", password);
-
-    // Send login data to FastAPI
-    fetch('http://127.0.0.1:8000/accounts/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Invalid credentials');
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Set the session in Flask with id, email, and name
-        fetch('/set-session', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ id: data.id, email: data.email, name: data.name })  // Send id, email, and name to Flask
-        })
-        .then(() => {
-            window.location.href = '/dashboard';  // Redirect to dashboard
-        });
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Handle login error
-        window.location.href = '/login?error=1';
-    });
-});
+                        document.getElementById("loginForm").addEventListener("submit", function(event) {
+                            event.preventDefault(); // Prevent form from refreshing the page
+                    
+                            const email = document.getElementById('email').value;
+                            const password = document.getElementById('password').value;
+                    
+                            // Prepare data for login
+                            const formData = new URLSearchParams();
+                            formData.append("username", email);  // FastAPI expects username instead of email
+                            formData.append("password", password);
+                    
+                            // Send login data to FastAPI
+                            fetch('http://127.0.0.1:8000/accounts/login', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                },
+                                body: formData
+                            })
+                            .then(response => {
+                                // Debug response status for visibility
+                                console.log(`FastAPI Response Status: ${response.status}`);
+                                if (response.status === 403) {
+                                    // Redirect to verify-email on 403
+                                    console.log("Redirecting to verify-email due to unverified email.");
+                                    window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
+                                } else if (!response.ok) {
+                                    throw new Error('Invalid credentials');
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                // Set the session in Flask with id, email, and name
+                                fetch('/set-session', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ id: data.id, email: data.email, name: data.name })
+                                })
+                                .then(() => {
+                                    window.location.href = '/dashboard';  // Redirect to dashboard
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                // Handle login error
+                                window.location.href = '/login?error=1';
+                            });
+                        });
                     </script>
 
                     <p class="text-center mt-3">Don't have an account? <a href="/signup">Sign up here</a></p>

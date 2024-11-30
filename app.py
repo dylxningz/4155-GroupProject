@@ -3,11 +3,17 @@ import requests
 from flask import flash, redirect, url_for
 import sys
 import subprocess
+from utilities.utils import login_required
 from models.favorite import Favorite
 from dependencies.database import db
+import logging
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey' 
+
+@app.route('/test-redirect')
+def test_redirect():
+    return redirect(url_for('verify_email'))
 
 @app.route('/set-session', methods=['POST'])
 def set_session():
@@ -19,10 +25,8 @@ def set_session():
         session['name'] = data['name'] 
         session['username'] = data['email'].split('@')[0] 
 
-        print(f"Session data set: id={session['id']}, name={session['name']}, email={session['email']}")
         return jsonify({"message": "Session data set successfully"})
     else:
-        print(f"Error: 'id', 'email', or 'name' not found in session data")
         return jsonify({"error": "Missing session data"}), 400
     
 @app.route('/get-session', methods=['GET'])
@@ -42,62 +46,128 @@ def set_flash_message():
     category = data.get('category', 'info')
     flash(message, category)
     return jsonify({"status": "success"})
-# Route for the homepage
+
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/test-session')
 def test_session():
     return jsonify(dict(session))
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
+@app.route('/verify-email', methods=['GET', 'POST'])
+def verify_email():
+    if request.method == 'GET':
+        return render_template("verify_email.html")
 
-        response = requests.post('http://127.0.0.1:8000/accounts', json={
-            'name': name,
-            'email': email,
-            'password': password
-        })
+    email = request.form.get('email')
+    code = request.form.get('code')
 
-        if response.status_code == 201:
-            flash('Sign-up successful! Please log in.')
+    if not email or not code:
+        flash('Email and verification code are required.', 'danger')
+        return redirect(url_for('verify_email'))
+
+    try:
+        response = requests.post(
+            'http://127.0.0.1:8000/accounts/verify',
+            params={'email': email, 'code': code}
+        )
+
+        if response.status_code == 200:
+            flash('Email verified successfully!', 'success')
             return redirect(url_for('login'))
         else:
-            flash('Sign-up failed. Please try again.')
+            try:
+                error_detail = response.json().get('detail', 'Unknown error')
+            except ValueError:
+                error_detail = 'Unexpected response from the server.'
+            flash(f"Verification failed: {error_detail}", 'danger')
+            return redirect(url_for('verify_email'))
 
-    return render_template('signup.html')
+    except requests.exceptions.RequestException as e:
+        flash(f"Failed to connect to the verification service: {str(e)}", 'danger')
+        return redirect(url_for('verify_email'))
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    # Handle POST request (form submission logic)
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        # Check for valid email domain
+        if not email.endswith("@charlotte.edu"):
+            flash("Only @charlotte.edu emails are allowed.", "danger")
+            return redirect(url_for("signup"))
+
+        # Send signup data to FastAPI
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/accounts/",
+                json={"name": name, "email": email, "password": password},
+            )
+
+            # Handle FastAPI response
+            if response.status_code == 200:
+                flash("Sign-up successful! Check your email for the verification code.", "success")
+                return redirect(url_for("verify_email", email=email))
+            else:
+                # Show detailed error from FastAPI or a default error
+                flash(response.json().get("detail", "Sign-up failed. Please try again."), "danger")
+                return redirect(url_for("signup"))
+
+        except requests.exceptions.RequestException as e:
+            # Handle connection errors or FastAPI being down
+            flash(f"Failed to connect to the signup service: {str(e)}", "danger")
+            return redirect(url_for("signup"))
+
+    # Handle GET request (display signup form with potential error flashes)
+    error = request.args.get("error")
+    if error == "password_mismatch":
+        flash("Passwords do not match!", "danger")
+    elif error == "invalid_email":
+        flash("Please use a @charlotte.edu email address.", "danger")
+    elif error == "submission_failed":
+        flash("Form submission failed. Please try again.", "danger")
+
+    return render_template("signup.html")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        session.clear()  
+        session.clear()
         email = request.form.get('email')
         password = request.form.get('password')
 
-        response = requests.post('http://127.0.0.1:8000/accounts/login', data={
-            'username': email,
-            'password': password
-        })
+        try:
+            response = requests.post('http://127.0.0.1:8000/accounts/login', data={
+                'username': email,
+                'password': password
+            })
 
-        if response.status_code == 200:
-            data = response.json()
-            session['email'] = data['email']
-            session['name'] = data['name']
-            session['id'] = data['id']
-            session['username'] = email.split('@')[0]
-            
-            print(f"Session after login: {dict(session)}")
-            
-            flash(f"Welcome {session['username']}, you have been successfully logged in.", "success")
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Login failed: Wrong email and/or password.', 'danger')
+            if response.status_code == 200:
+                data = response.json()
+                session['email'] = data['email']
+                session['name'] = data['name']
+                session['id'] = data['id']
+                session['username'] = email.split('@')[0]
+                flash(f"Welcome {session['username']}, you have been successfully logged in.", "success")
+                return redirect(url_for('dashboard'))
+
+            elif response.status_code == 403:
+                flash('Your email is not verified. Please verify your email to log in.', 'warning')
+                return redirect(url_for('verify_email', email=email))
+
+            else:
+                flash('Login failed: Wrong email and/or password.', 'danger')
+                return redirect(url_for('login'))
+
+        except requests.exceptions.RequestException as e:
+            flash('An error occurred while connecting to the authentication service. Please try again.', 'danger')
+            return redirect(url_for('login'))
+        except Exception as e:
+            flash('An unexpected error occurred. Please try again later.', 'danger')
             return redirect(url_for('login'))
 
     return render_template('login.html')
@@ -109,11 +179,10 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     messages = get_flashed_messages(with_categories=True)
-    
     return render_template('dashboard.html', user_id=session.get('id'))
-
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
@@ -125,12 +194,10 @@ def update_profile():
         flash('You need to be logged in to update your profile.', 'danger')
         return redirect(url_for('login'))
 
-    # Get the form data
     user_id = session['id']
     name = request.form.get('name')
     email = request.form.get('email')
 
-    # Send the data to the FastAPI backend
     response = requests.put(f'http://127.0.0.1:8000/accounts/{user_id}', json={
         'name': name,
         'email': email
@@ -151,18 +218,15 @@ def change_password():
         flash('You need to be logged in to change your password.', 'danger')
         return redirect(url_for('login'))
 
-    # Get the form data
     user_id = session['id']
     current_password = request.form.get('current-password')
     new_password = request.form.get('new-password')
     confirm_password = request.form.get('confirm-password')
 
-    # Check if the new password and confirm password match
     if new_password != confirm_password:
         flash('New password and confirm password do not match.', 'danger')
         return redirect(url_for('settings'))
 
-    # Send the data to the FastAPI backend for password change
     response = requests.post(f'http://127.0.0.1:8000/accounts/{user_id}/change-password', json={
         'current_password': current_password,
         'new_password': new_password
@@ -181,15 +245,13 @@ def update_notifications():
         flash('You need to be logged in to update notifications.', 'danger')
         return redirect(url_for('login'))
 
-    # Handle the notification preferences here (mocking it in this case)
     email_notifications = request.form.get('email-notifications') == 'on'
-    # Assume backend handles notifications (you can customize this as needed)
     flash('Notification preferences updated!', 'success')
 
     return redirect(url_for('settings'))
 
-# Route for creating a new item (listing)
 @app.route('/create-item', methods=['GET', 'POST'])
+@login_required
 def create_item():
     if request.method == 'POST':
         title = request.form.get('title')
@@ -215,18 +277,17 @@ def create_item():
             return redirect(url_for('items'))
         else:
             flash('Failed to create listing. Please try again.', 'danger')
-            print(f"Error from FastAPI: {response.json()}")  # Debugging
 
     return render_template('itemcreate.html')
 
 @app.route('/edit-item/<int:item_id>', methods=['GET', 'POST'])
+@login_required
 def edit_item(item_id):
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
         price = request.form.get('price')
 
-        # Update the item with the new data
         formData = {
             'title': title,
             'description': description,
@@ -250,6 +311,7 @@ def edit_item(item_id):
         return redirect(url_for('items'))
 
 @app.route('/delete-item/<int:item_id>', methods=['POST'])
+@login_required
 def delete_item(item_id):
     response = requests.delete(f'http://127.0.0.1:8000/listings/{item_id}')
     if response.status_code == 204:
@@ -259,26 +321,19 @@ def delete_item(item_id):
 
     return redirect(url_for('items'))
 
-
-# Route for displaying all items (listings)
 @app.route('/items')
 def items():
-    # Fetch listings from FastAPI
     response = requests.get('http://127.0.0.1:8000/listings')
     listings = response.json() if response.status_code == 200 else []
     return render_template('items.html', listings=listings)
 
-# Route for item details
 @app.route('/item/<int:item_id>')
 def item_detail(item_id):
     return render_template('item.html')
 
-# Route for user profile
 @app.route('/userProfile')
 def userProfile():
     return render_template('userProfile.html')
-
-
 
 @app.route('/api/signup', methods=['POST'])
 def user_signup():
@@ -288,29 +343,19 @@ def user_signup():
 def user_login():
     pass
 
-
-
-# Route for fetching all listings (to be used by the front-end in items.html)
 @app.route('/listings')
 def get_listings():
-    # Assuming you're making a request to the FastAPI backend here
     response = requests.get('http://127.0.0.1:8000/listings')
     return jsonify(response.json())
 
-
-
-# Route for fetching a single listing by ID (to be used by the front-end in item.html)
 @app.route('/listings/<int:item_id>')
 def get_listing(item_id):
-    # Assuming you're making a request to the FastAPI backend here
     response = requests.get(f'http://127.0.0.1:8000/listings/{item_id}')
     return jsonify(response.json())
-
 
 @app.route('/reviews', methods=['GET', 'POST'])
 def reviews():
     if request.method == 'POST':
-        # Handle form submission for review creation
         user_id = session.get('id')
         content = request.form.get('content')
         rating = request.form.get('rating')
@@ -359,17 +404,16 @@ def submit_review():
 
     return redirect(url_for('reviews'))
 
-
-
 @app.route('/start-conversation', methods=['POST'])
+@login_required
 def start_conversation():
     if 'id' not in session:
         flash('You need to be logged in to start a conversation.', 'danger')
         return redirect(url_for('login'))
 
-    participant_1 = session['id']  # Logged-in user
-    participant_2 = request.json.get('participant_2')  # Seller
-    item_id = request.json.get('item_id')  # Item being messaged about
+    participant_1 = session['id']
+    participant_2 = request.json.get('participant_2')
+    item_id = request.json.get('item_id')
     response = requests.get(f'http://127.0.0.1:8000/conversations/check', params={
         'user_1': participant_1,
         'user_2': participant_2,
@@ -399,8 +443,8 @@ def start_conversation():
         flash('Failed to start conversation. Please try again.', 'danger')
         return redirect(url_for('item_detail', item_id=item_id))
 
-
 @app.route('/chat/<int:conversation_id>')
+@login_required
 def chat(conversation_id):
     if 'id' not in session:
         flash('You need to log in to view this chat.', 'danger')
@@ -441,6 +485,7 @@ def chat(conversation_id):
     )
 
 @app.route('/conversations')
+@login_required
 def conversations():
     if 'id' not in session:
         flash('You need to be logged in to view conversations.', 'danger')
@@ -448,6 +493,7 @@ def conversations():
     return render_template('conversations.html', user_id=session['id'])
 
 @app.route('/favorite', methods=['POST'])
+@login_required
 def add_favorite():
     data = request.json
     user_id = data.get('user_id')
@@ -463,7 +509,37 @@ def add_favorite():
 
     return jsonify({"message": "Item favorited successfully"}), 201
 
+@app.route('/delete-account', methods=['POST'])
+@login_required
+def delete_account():
+    user_id = session.get('id')
+
+    if not user_id:
+        flash('You need to be logged in to delete your account.', 'danger')
+        return redirect(url_for('login'))
+
+    try:
+        # Send delete request to FastAPI
+        response = requests.delete(f'http://127.0.0.1:8000/accounts/{user_id}')
+        
+        if response.status_code == 204:  # Successful deletion
+            session.clear()  # Clear the session
+            flash('Your account has been deleted successfully.', 'success')
+            return redirect(url_for('index'))  # Redirect to the index page
+        else:
+            # Handle failed deletion response
+            error_message = response.json().get('detail', 'Failed to delete your account.')
+            flash(error_message, 'danger')
+    except requests.exceptions.RequestException as e:
+        # Handle API connection errors
+        flash(f"An error occurred: {str(e)}", 'danger')
+
+    # Redirect back to settings if deletion fails
+    return redirect(url_for('settings'))
 
 if __name__ == '__main__':
-    subprocess.Popen([sys.executable, "api.py"])
-    app.run(debug=True)
+    # Start the FastAPI app in a subprocess
+    subprocess.Popen([sys.executable, "api.py"])  # Ensure api.py runs FastAPI on port 8000
+    
+    # Run Flask on port 5000
+    app.run(host="0.0.0.0", port=5000, debug=True)

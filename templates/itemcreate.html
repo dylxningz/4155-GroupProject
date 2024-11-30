@@ -103,158 +103,116 @@
         }
     </style>
 
-    <script>
-        document.getElementById("listingForm").addEventListener("submit", function(event) {
-            event.preventDefault();
+<script>
+    document.getElementById("listingForm").addEventListener("submit", async function(event) {
+        event.preventDefault(); // Prevent default form submission
 
+        try {
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
-            // NEW TAGS VARIABLE
-            const tags = document.getElementById('tags').value;
-            const imageInput = document.getElementById('imageInput').files[0];  // Get the image file
+            const imageInput = document.getElementById('imageInput').files[0]; // Get the image file
 
-            function encodeImageFileAsBase64(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result.split(',')[1]);  // Remove Base64 prefix
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);  // Read file as data URL
-                });
+            console.log("Form values:", { title, description, price }); // Debug form values
+
+            // Fetch session data
+            const sessionResponse = await fetch('/get-session');
+            const sessionData = await sessionResponse.json();
+
+            if (sessionData.error) {
+                throw new Error(sessionData.error);
             }
 
-            fetch('/get-session')
-            .then(response => response.json())
-            .then(sessionData => {
-                if (sessionData.error) {
-                    throw new Error(sessionData.error);
-                }
+            const userId = sessionData.id; // Extract 'id' from session
 
-                const userId = sessionData.id;  // Extract 'id' from session
+            // Prepare form data to send to FastAPI
+            const formData = {
+                title: title,
+                description: description,
+                price: parseFloat(price),
+                user_id: userId // Set 'user_id' for the listing
+            };
 
-                // Prepare form data to send to FastAPI
-                const formData = {
-                    title: title,
-                    description: description,
-                    price: parseFloat(price),
-                    user_id: userId  // Set 'user_id' for the listing
-                };
-                console.log("Trying to create listing");
+            console.log("Submitting listing:", formData); // Debug listing data
 
-                return fetch('http://127.0.0.1:8000/listings', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => { throw new Error(data.detail) });
-                }
-                console.log("Successfully created listing");
-                return response.json();
-            })
-            .then(async data => {
-                console.log("Trying to create image");
-                const listingId = data.id;  // Get the ID of the new listing
-
-                if (imageInput) {  // Check if an image was uploaded
-                    const base64Image = await encodeImageFileAsBase64(imageInput);  // Encode image to Base64
-                    const imageData = {
-                        listing_id: listingId,
-                        img_data: base64Image  // Add Base64 string of the image
-                    };
-
-                    // Send the image data in JSON format
-                    return fetch('http://127.0.0.1:8000/images', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(imageData)
-                    });
-                }
-            })
-            .then(() => {
-                // Set a success message and redirect to items page
-                return fetch('/set-flash-message', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ message: 'Listing and image created successfully!', category: 'success' })
-                });
-            })
-            .then(() => {
-                window.location.href = '/items';  // Redirect to items page
-            })
-            .catch(error => {
-                fetch('/set-flash-message', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ message: `Error creating listing: ${error.message}`, category: 'danger' })
-                }).then(() => {
-                    window.location.href = '/items';  // Redirect to items page
-                });
+            // Submit the listing to FastAPI
+            const listingResponse = await fetch('http://127.0.0.1:8000/listings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
             });
-        });
-        
-        const tagsInput = document.getElementById("tags-input")
-        const tagsOutput = document.getElementById("tags-output");
-        const tagsArray = [];
 
-        
-        // If the key pressed on the tags element was 'enter' (with other criteria met),
-        //      It should create a new tag div in the output box
-        //      Otherwise, it should respond with an error
-        tagsInput.addEventListener("keypress", function(event) {
-            if(event.key === 'Enter'){ 
-                event.preventDefault(); 
-                let newTagValue = document.getElementById("tags-input").value;
-                // Must already be less than 5 tags in the output, greater than/equal to 3 characters, and not be included already in the output
-                if(tagsArray.length <= 4 && document.getElementById("tags-input").value.length >= 3 && !tagsArray.includes(document.getElementById("tags-input").value)){
-                    // Push new value to tags array in case of submission
-                    tagsArray.push(newTagValue);
-                    // console.log(tagsArray);
-                    
-                    // Create a list element without the bullet,
-                    // Insert a labeled button element with the text entry,
-                    // Append to the ul output element
-                    const newTag = document.createElement('li');
-                    newTag.setAttribute("style", "list-style-type:none;");
-                    const newTagButton = document.createElement('button');
-                    newTagButton.textContent = newTagValue;
-                    newTag.appendChild(newTagButton);
-                    tagsOutput.appendChild(newTag);
-                    
-                    // Each tag must have an event listener so that they can be removed
-                    newTagButton.addEventListener('click', () => {
-                        // Get the index of the tag in the array (same as the output element)
-                        const positionOfTag = tagsArray.indexOf(newTagValue);
-                        if(positionOfTag !== -1){
-                            // Remove the tag from the output and splice the tag array to reflect the change
-                            tagsOutput.removeChild(newTag);
-                            tagsArray.splice(positionOfTag, 1);
-                            // console.log(tagsArray);
-                        }
-                    });
-
-                    // console.log(tagsOutput.children);
-                }else{
-                    // If the entry is not valid for any reason,
-                    // Propogate error and clear text box
-                    document.getElementById("tag-error").removeAttribute("hidden");
-                    setTimeout(() => {
-                        document.getElementById("tag-error").setAttribute("hidden", true);                   
-                    }, 2000);
-                }
-                tagsInput.value = "";
+            if (!listingResponse.ok) {
+                const errorData = await listingResponse.json();
+                throw new Error(errorData.detail || 'Failed to create listing.');
             }
+
+            const listingData = await listingResponse.json();
+            console.log("Listing created:", listingData); // Debug created listing
+
+            const listingId = listingData.id;
+
+            // Handle image upload if an image is selected
+            if (imageInput) {
+                const base64Image = await encodeImageFileAsBase64(imageInput); // Encode image to Base64
+                const imageData = {
+                    listing_id: listingId,
+                    img_data: base64Image // Add Base64 string of the image
+                };
+
+                console.log("Submitting image:", imageData); // Debug image data
+
+                const imageResponse = await fetch('http://127.0.0.1:8000/images', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(imageData)
+                });
+
+                if (!imageResponse.ok) {
+                    throw new Error('Failed to upload image.');
+                }
+                console.log("Image uploaded successfully"); // Debug image upload
+            }
+
+            // Set a success message
+            await fetch('/set-flash-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: 'Listing and image created successfully!', category: 'success' })
+            });
+
+            // Redirect to items page
+            window.location.href = '/items';
+        } catch (error) {
+            console.error("Error:", error.message); // Debug errors
+            await fetch('/set-flash-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: `Error creating listing: ${error.message}`, category: 'danger' })
+            });
+
+            // Redirect to items page on failure
+            window.location.href = '/items';
+        }
+    });
+
+    // Utility function for Base64 encoding
+    function encodeImageFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result.split(',')[1]); // Remove Base64 prefix
+            reader.onerror = reject;
+            reader.readAsDataURL(file); // Read file as data URL
         });
-    </script>
+    }
+</script>
 
 {% endblock %}

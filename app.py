@@ -538,5 +538,8 @@ def delete_account():
     return redirect(url_for('settings'))
 
 if __name__ == '__main__':
-    subprocess.Popen([sys.executable, "api.py"])
-    app.run(debug=True)
+    # Start the FastAPI app in a subprocess
+    subprocess.Popen([sys.executable, "api.py"])  # Ensure api.py runs FastAPI on port 8000
+    
+    # Run Flask on port 5000
+    app.run(host="0.0.0.0", port=5000, debug=True)

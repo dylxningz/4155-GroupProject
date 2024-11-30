@@ -33,4 +33,5 @@ for route in app.routes:
         print(f"HTTP Path: {route.path}, Methods: {route.methods}")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=conf.app_host, port=conf.app_port)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

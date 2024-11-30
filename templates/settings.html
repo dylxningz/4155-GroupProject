@@ -1,74 +1,78 @@
 {% extends 'base.html' %}
 {% block title %}Settings{% endblock %}
 {% block content %}
-    <div class="settings-main container mt-5">
-        <h2 class="text-center mb-4">Account Settings</h2>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="login-container">
+                <h2 class="login-title text-center">Account Settings</h2>
 
-        <!-- Profile Settings Section -->
-        <div class="settings-section mb-4">
-            <h4>Profile Information</h4>
-            <form id="profileForm" method="POST" action="/update-profile">
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" class="form-control" id="name" name="name" value="{{ session['name'] }}" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Update Profile</button>
-            </form>
-        </div>
+                <!-- Profile Information -->
+                <form id="profileForm" method="POST" action="/update-profile" class="mb-4">
+                    <h4 class="text-center">Profile Information</h4>
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ session['name'] }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Update Profile</button>
+                </form>
 
-        <!-- Password Change Section -->
-        <div class="settings-section mb-4">
-            <h4>Change Password</h4>
-            <form id="passwordForm" method="POST" action="/change-password">
-                <div class="form-group">
-                    <label for="current-password">Current Password</label>
-                    <input type="password" class="form-control" id="current-password" name="current-password" required>
-                </div>
-                <div class="form-group">
-                    <label for="new-password">New Password</label>
-                    <input type="password" class="form-control" id="new-password" name="new-password" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirm-password">Confirm New Password</label>
-                    <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Change Password</button>
-            </form>
-        </div>
+                <!-- Password Change -->
+                <form id="passwordForm" method="POST" action="/change-password" class="mb-4">
+                    <h4 class="text-center">Change Password</h4>
+                    <div class="form-group">
+                        <label for="current-password">Current Password</label>
+                        <input type="password" class="form-control" id="current-password" name="current-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password</label>
+                        <input type="password" class="form-control" id="new-password" name="new-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Change Password</button>
+                </form>
 
-        <!-- Notification Settings Section -->
-        <div class="settings-section">
-            <h4>Notification Preferences</h4>
-            <form id="notificationForm" method="POST" action="/update-notifications">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="email-notifications" name="email-notifications" checked>
-                    <label class="form-check-label" for="email-notifications">Receive email notifications</label>
-                </div>
-                <button type="submit" class="btn btn-primary mt-2">Update Notifications</button>
-            </form>
+                <!-- Notification Preferences -->
+                <form id="notificationForm" method="POST" action="/update-notifications" class="mb-4">
+                    <h4 class="text-center">Notification Preferences</h4>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="email-notifications" name="email-notifications" checked>
+                        <label class="form-check-label" for="email-notifications">Receive email notifications</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block mt-3">Update Notifications</button>
+                </form>
+
+                <!-- Delete Account -->
+                <form id="deleteAccountForm" method="POST" action="/delete-account">
+                    <h4 class="text-center text-danger">Delete Account</h4>
+                    <p class="text-center text-muted">Deleting your account is permanent and cannot be undone.</p>
+                    <button type="submit" class="btn btn-danger btn-block">Delete Account</button>
+                </form>
+            </div>
         </div>
     </div>
+</div>
 
-    <style>
-        .settings-main {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
+<style>
+    .login-container {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-        .settings-section {
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
+    .login-title {
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
 
-        h4 {
-            margin-bottom: 15px;
-        }
-    </style>
-
+    h4 {
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #495057;
+    }
+</style>
 {% endblock %}

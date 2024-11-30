@@ -509,6 +509,34 @@ def add_favorite():
 
     return jsonify({"message": "Item favorited successfully"}), 201
 
+@app.route('/delete-account', methods=['POST'])
+@login_required
+def delete_account():
+    user_id = session.get('id')
+
+    if not user_id:
+        flash('You need to be logged in to delete your account.', 'danger')
+        return redirect(url_for('login'))
+
+    try:
+        # Send delete request to FastAPI
+        response = requests.delete(f'http://127.0.0.1:8000/accounts/{user_id}')
+        
+        if response.status_code == 204:  # Successful deletion
+            session.clear()  # Clear the session
+            flash('Your account has been deleted successfully.', 'success')
+            return redirect(url_for('index'))  # Redirect to the index page
+        else:
+            # Handle failed deletion response
+            error_message = response.json().get('detail', 'Failed to delete your account.')
+            flash(error_message, 'danger')
+    except requests.exceptions.RequestException as e:
+        # Handle API connection errors
+        flash(f"An error occurred: {str(e)}", 'danger')
+
+    # Redirect back to settings if deletion fails
+    return redirect(url_for('settings'))
+
 if __name__ == '__main__':
     subprocess.Popen([sys.executable, "api.py"])
     app.run(debug=True)

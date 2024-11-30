@@ -7,14 +7,13 @@ class Conversation(Base):
     __tablename__ = 'conversations'
 
     id = Column(Integer, primary_key=True, index=True)
-    participant_1 = Column(Integer, ForeignKey("accounts.id"))
-    participant_2 = Column(Integer, ForeignKey("accounts.id"))
-    item_id = Column(Integer, ForeignKey("listings.id"), nullable=False)
+    participant_1 = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
+    participant_2 = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
+    item_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False)
+  # Add ondelete="CASCADE"
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    messages = relationship("Message", back_populates="conversation", cascade="all, delete")
-
-
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
 class Message(Base):
     __tablename__ = 'messages'
 

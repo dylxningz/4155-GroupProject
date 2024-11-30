@@ -9,4 +9,4 @@ class Image(Base):
     listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"))  # Enable cascade delete
     img_data = Column(LargeBinary)
 
-    listing = relationship("Listing", back_populates="images")
+    listing = relationship("Listing", back_populates="images", single_parent=True)

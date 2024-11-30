@@ -82,6 +82,13 @@ def read_one(user_id: int, db: Session = Depends(get_db)):
     return controller.read_one(db, item_id=user_id)
 
 # Delete account
-@router.delete("/{user_id}")
-def delete(user_id: int, db: Session = Depends(get_db)):
-    return controller.delete(db=db, item_id=user_id)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(user_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a user account by ID.
+    """
+    try:
+        return controller.delete(db=db, item_id=user_id)
+    except HTTPException as e:
+        # Re-raise the exception with the original message and status code
+        raise HTTPException(status_code=e.status_code, detail=e.detail)

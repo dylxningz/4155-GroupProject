@@ -7,6 +7,7 @@ from passlib.context import CryptContext
 import hashlib
 from utilities.email_utils import send_verification_email
 
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -148,14 +149,20 @@ def update(db: Session, item_id, request):
     return item.first()
 
 
-def delete(db: Session, item_id):
+def delete(db: Session, item_id: int):
     try:
-        item = db.query(model.Account).filter(model.Account.id == item_id)
-        if not item.first():
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
-        item.delete(synchronize_session=False)
+        # Find the account
+        account = db.query(model.Account).filter(model.Account.id == item_id).first()
+        if not account:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found!")
+
+        # Delete the account (cascade deletion will handle related entities)
+        db.delete(account)
         db.commit()
+
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
     except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
+        db.rollback()  # Rollback in case of error
+        error = str(e.__dict__.get('orig', str(e)))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -15,5 +15,5 @@ class Account(Base):
     code_expiration = Column(DateTime, nullable=True)
 
 
-    listings = relationship("Listing", back_populates="account")
+    listings = relationship("Listing", back_populates="account", cascade="all, delete-orphan")
     favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")

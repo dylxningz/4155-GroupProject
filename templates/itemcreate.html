@@ -104,6 +104,72 @@
     </style>
 
 <script>
+    const tagsInput = document.getElementById("tags-input");
+    const tagsOutput = document.getElementById("tags-output");
+    let tagsArray = "";
+    
+    // If the key pressed on the tags element was 'enter' (with other criteria met),
+    //      It should create a new tag div in the output box
+    //      Otherwise, it should respond with an error
+    tagsInput.addEventListener("keypress", function(event) {
+        if(event.key === 'Enter'){ 
+            event.preventDefault();
+            
+            // Get text input
+            let newTagValue = document.getElementById("tags-input").value;
+            
+            // Must already be less than 5 tags in the output, greater than/equal to 3 characters, and not be included already in the output
+            if(tagsArray.split(',').length <= 4 && newTagValue.length >= 3 && !tagsArray.includes(newTagValue)){
+                // Push new value to tags string with comma to separate entries
+                tagsArray += newTagValue;
+                tagsArray += ",";
+                
+                // Create a list element w/o bullet,
+                const newTag = document.createElement('li');
+                newTag.setAttribute("style", "list-style-type:none;");
+                
+                // Insert a labeled button element
+                const newTagButton = document.createElement('button');
+                newTagButton.textContent = newTagValue;
+                
+                // Add tag to output
+                newTag.appendChild(newTagButton);
+                tagsOutput.appendChild(newTag);
+                
+                // Each tag must have an event listener so that they can be removed
+                newTagButton.addEventListener('click', () => {
+                    // Get the index of the tag in the array (same as the output element)
+                    // Also removes tag from global tag string
+                    const positionOfTag = removeTag(newTagButton.textContent);
+                    
+                    // Remove the tag from the output
+                    const tagToRemove = tagsOutput.children[positionOfTag];
+                    tagsOutput.removeChild(tagToRemove);
+                });
+                
+            }else{
+                // If the entry is not valid for any reason, propogate error
+                document.getElementById("tag-error").removeAttribute("hidden");
+                setTimeout(() => {
+                    document.getElementById("tag-error").setAttribute("hidden", true);                   
+                }, 2000);
+            }
+            // Regardless of the result, clear the text entry for next tag
+            tagsInput.value = "";
+        }
+    });
+    
+    // Function for removing specific tag from the tagsArray
+    // Returns the index of the element in order to remove it 
+    // from the tags-output element
+    function removeTag(str){
+        let tags = tagsArray.split(',');
+        const indexOfStr = tags.indexOf(str);
+        tags.splice(indexOfStr, 1);
+        tagsArray = tags.join(',');
+        return indexOfStr;
+    }
+    
     document.getElementById("listingForm").addEventListener("submit", async function(event) {
         event.preventDefault(); // Prevent default form submission
 
@@ -111,9 +177,10 @@
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
+            const tags = tagsArray;
             const imageInput = document.getElementById('imageInput').files[0]; // Get the image file
 
-            console.log("Form values:", { title, description, price }); // Debug form values
+            console.log("Form values:", { title, description, price, tags }); // Debug form values
 
             // Fetch session data
             const sessionResponse = await fetch('/get-session');
@@ -130,6 +197,7 @@
                 title: title,
                 description: description,
                 price: parseFloat(price),
+                tags: tags,
                 user_id: userId // Set 'user_id' for the listing
             };
 

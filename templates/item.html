@@ -63,6 +63,7 @@ async function fetchItemDetails() {
         document.getElementById('item-title').textContent = itemData.title;
         document.getElementById('item-description').textContent = itemData.description;
         document.getElementById('item-price-value').textContent = itemData.price;
+        document.getElementById('tags-output').textContent = itemData.tags;
 
         const listingOwnerId = itemData.user_id;
         fetchOwnerDetails(listingOwnerId);
@@ -173,6 +174,7 @@ function updateFavoriteButton(isFavorited) {
             document.getElementById('item-title').textContent = data.title;
             document.getElementById('item-description').textContent = data.description;
             document.getElementById('item-price-value').textContent = data.price;
+            document.getElementById('tags-output').textContent = data.tags;
 
             return fetch(`http://127.0.0.1:8000/accounts/${data.user_id}`)
                 .then(ownerResponse => {

@@ -21,8 +21,8 @@
                     <div class="form-group">
                         <label for="tags-input">Tags:</label>
                         <input type="text" class="form-control" id="tags-input" name="tags-input" placeholder="Enter Up To 5 Tags:">
-                        <output id="tag-error" name="tag-error" style="color: red;" hidden > Either the submitted tag was already used or you already reached the max 5.</output>
-                        <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;"></ul>
+                        <output id="tag-error" name="tag-error" style="color: red;" hidden > Either the submitted tag was already used, it contained a ',' or you already reached the max 5</output>
+                        <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;" value="{{ item.tags }}"></ul>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Update Listing</button>
                 </form>
@@ -92,45 +92,77 @@
     <script>
         const tagsInput = document.getElementById("tags-input");
         const tagsOutput = document.getElementById("tags-output");
-        const tagsArray = [];
-
+        let tagsEdit = tagsOutput.value;
+        let tagsArray = "";
+        
+        // Load the page with the tags from the database
+        window.onload = function loadTags(){
+            let tags = tagsEdit.split(',');
+            tags.forEach(entry => {
+                // Create a list element without the bullet,
+                const newTag = document.createElement('li');
+                newTag.setAttribute("style", "list-style-type:none;");
+                
+                // Insert a labeled button element with the text entry,
+                const newTagButton = document.createElement('button');
+                newTagButton.textContent = entry;
+                
+                // Append to the ul output element
+                newTag.appendChild(newTagButton);
+                tagsOutput.appendChild(newTag);
+                
+                // Each tag must have an event listener so that they can be removed
+                newTagButton.addEventListener('click', () => {
+                    // Get the index of the tag in the array (same as the output element)
+                    // Also removes tag from global string
+                    const positionOfTag = removeTag(newTagButton.textContent);
+                    
+                    // Remove the tag from the output and splice the tag array to reflect the change
+                    const tagToRemove = tagsOutput.children[positionOfTag];
+                    tagsOutput.removeChild(tagToRemove);
+                });
+            });
+        }
         
         // If the key pressed on the tags element was 'enter' (with other criteria met),
         //      It should create a new tag div in the output box
         //      Otherwise, it should respond with an error
         tagsInput.addEventListener("keypress", function(event) {
             if(event.key === 'Enter'){ 
-                event.preventDefault(); 
+                event.preventDefault();
+                
+                // Get text value from input field
                 let newTagValue = document.getElementById("tags-input").value;
+                
                 // Must already be less than 5 tags in the output, greater than/equal to 3 characters, and not be included already in the output
-                if(tagsArray.length <= 4 && document.getElementById("tags-input").value.length >= 3 && !tagsArray.includes(document.getElementById("tags-input").value)){
-                    // Push new value to tags array in case of submission
-                    tagsArray.push(newTagValue);
-                    // console.log(tagsArray);
+                if(tagsArray.split(',').length <= 4 && newTagValue.length >= 3 && !tagsArray.includes(newTagValue)){
+                    // Push new value to tags string with comma to separate entries
+                    tagsArray += newTagValue;
+                    tagsArray += ",";
                     
                     // Create a list element without the bullet,
-                    // Insert a labeled button element with the text entry,
-                    // Append to the ul output element
                     const newTag = document.createElement('li');
                     newTag.setAttribute("style", "list-style-type:none;");
+                    
+                    // Insert a labeled button element with the text entry,
                     const newTagButton = document.createElement('button');
                     newTagButton.textContent = newTagValue;
+                    
+                    // Append to the ul output element
                     newTag.appendChild(newTagButton);
                     tagsOutput.appendChild(newTag);
                     
                     // Each tag must have an event listener so that they can be removed
                     newTagButton.addEventListener('click', () => {
                         // Get the index of the tag in the array (same as the output element)
-                        const positionOfTag = tagsArray.indexOf(newTagValue);
-                        if(positionOfTag !== -1){
-                            // Remove the tag from the output and splice the tag array to reflect the change
-                            tagsOutput.removeChild(newTag);
-                            tagsArray.splice(positionOfTag, 1);
-                            // console.log(tagsArray);
-                        }
+                        // Also removes tag from global string
+                        const positionOfTag = removeTag(newTagButton.textContent);
+                        
+                        // Remove the tag from the output and splice the tag array to reflect the change
+                        const tagToRemove = tagsOutput.children[positionOfTag];
+                        tagsOutput.removeChild(tagToRemove);
                     });
-
-                    // console.log(tagsOutput.children);
+                    
                 }else{
                     // If the entry is not valid for any reason,
                     // Propogate error and clear text box
@@ -143,12 +175,24 @@
             }
         });
         
+        // Function for removing specific tag from the tagsArray
+        // Returns the index of the element in order to remove it 
+        // from the tags-output element
+        function removeTag(str){
+            let tags = tagsArray.split(',');
+            const indexOfStr = tags.indexOf(str);
+            tags.splice(indexOfStr, 1);
+            tagsArray = tags.join(',');
+            return indexOfStr;
+        }
+        
         document.getElementById("editForm").addEventListener("submit", function(event) {
             event.preventDefault();  // Prevent default form submission
 
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
+            const tags = tagsArray;
 
             fetch('/get-session')
             .then(response => response.json())
@@ -160,7 +204,8 @@
                 const formData = {
                     title: title,
                     description: description,
-                    price: parseFloat(price)
+                    price: parseFloat(price),
+                    tags: tags
                 };
 
                 fetch(`http://127.0.0.1:8000/listings/{{ item.id }}`, {

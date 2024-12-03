@@ -22,7 +22,7 @@
                         <label for="tags-input">Tags:</label>
                         <input type="text" class="form-control" id="tags-input" name="tags-input" placeholder="Enter Up To 5 Tags:">
                         <output id="tag-error" name="tag-error" style="color: red;" hidden > Either the submitted tag was already used, it contained a ',' or you already reached the max 5</output>
-                        <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;" value="{{ item.tags }}"></ul>
+                        <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;" value="{{ item.tag }}"></ul>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Update Listing</button>
                 </form>
@@ -97,31 +97,33 @@
         
         // Load the page with the tags from the database
         window.onload = function loadTags(){
-            let tags = tagsEdit.split(',');
-            tags.forEach(entry => {
-                // Create a list element without the bullet,
-                const newTag = document.createElement('li');
-                newTag.setAttribute("style", "list-style-type:none;");
-                
-                // Insert a labeled button element with the text entry,
-                const newTagButton = document.createElement('button');
-                newTagButton.textContent = entry;
-                
-                // Append to the ul output element
-                newTag.appendChild(newTagButton);
-                tagsOutput.appendChild(newTag);
-                
-                // Each tag must have an event listener so that they can be removed
-                newTagButton.addEventListener('click', () => {
-                    // Get the index of the tag in the array (same as the output element)
-                    // Also removes tag from global string
-                    const positionOfTag = removeTag(newTagButton.textContent);
+            if(tagsEdit != null){
+                let tags = tagsEdit.split(',');
+                tags.forEach(entry => {
+                    // Create a list element without the bullet,
+                    const newTag = document.createElement('li');
+                    newTag.setAttribute("style", "list-style-type:none;");
                     
-                    // Remove the tag from the output and splice the tag array to reflect the change
-                    const tagToRemove = tagsOutput.children[positionOfTag];
-                    tagsOutput.removeChild(tagToRemove);
+                    // Insert a labeled button element with the text entry,
+                    const newTagButton = document.createElement('button');
+                    newTagButton.textContent = entry;
+                    
+                    // Append to the ul output element
+                    newTag.appendChild(newTagButton);
+                    tagsOutput.appendChild(newTag);
+                    
+                    // Each tag must have an event listener so that they can be removed
+                    newTagButton.addEventListener('click', () => {
+                        // Get the index of the tag in the array (same as the output element)
+                        // Also removes tag from global string
+                        const positionOfTag = removeTag(newTagButton.textContent);
+                        
+                        // Remove the tag from the output and splice the tag array to reflect the change
+                        const tagToRemove = tagsOutput.children[positionOfTag];
+                        tagsOutput.removeChild(tagToRemove);
+                    });
                 });
-            });
+            }
         }
         
         // If the key pressed on the tags element was 'enter' (with other criteria met),
@@ -135,7 +137,7 @@
                 let newTagValue = document.getElementById("tags-input").value;
                 
                 // Must already be less than 5 tags in the output, greater than/equal to 3 characters, and not be included already in the output
-                if(tagsArray.split(',').length <= 4 && newTagValue.length >= 3 && !tagsArray.includes(newTagValue)){
+                if(tagsArray.split(',').length <= 5 && newTagValue.length >= 3 && !tagsArray.includes(newTagValue) && !newTagValue.includes(',')){
                     // Push new value to tags string with comma to separate entries
                     tagsArray += newTagValue;
                     tagsArray += ",";

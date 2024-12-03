@@ -29,7 +29,7 @@
             <h1 id="item-title" class="item-detail-title">Item Title</h1>
             <p id="item-price" class="text-muted">Price: $<span id="item-price-value"></span></p>
             <label for="tags-output" class="text-muted">Tags:</label>
-            <ul id="tags-output" style="list-style-type: none;"></ul>
+            <p id="tags-output" class="text-muted">Tags: <span id="item-tags"></span></p>
             <p id="item-author" class="text-muted">Posted by: <span id="item-owner-name"></span></p>
             <button id="message-seller-btn" class="btn btn-success mb-3">Message Seller</button>
         </div>
@@ -63,7 +63,6 @@ async function fetchItemDetails() {
         document.getElementById('item-title').textContent = itemData.title;
         document.getElementById('item-description').textContent = itemData.description;
         document.getElementById('item-price-value').textContent = itemData.price;
-        document.getElementById('tags-output').textContent = itemData.tags;
 
         const listingOwnerId = itemData.user_id;
         fetchOwnerDetails(listingOwnerId);

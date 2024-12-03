@@ -19,7 +19,7 @@
                         <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="Enter item price" required>
                     </div>
                     <div class="form-group">
-                        <label for="tags">Tags:</label>
+                        <label for="tags-input">Tags:</label>
                         <input type="text" class="form-control" id="tags-input" name="tags-input" placeholder="Enter Up To 5 Tags:">
                         <output id="tag-error" name="tag-error" style="color: red;" hidden > Either the submitted tag was already used or you already reached the max 5.</output>
                         <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;"></ul>
@@ -104,6 +104,55 @@
     </style>
 
 <script>
+    const tagsInput = document.getElementById("tags-input");
+    const tagsOutput = document.getElementById("tags-output");
+    const tagsArray = [];
+
+    tagsInput.addEventListener("keypress", function(event) {
+        if(event.key === 'Enter'){
+            event.preventDefault();
+            let newTagValue = document.getElementById("tags-input").value;
+            // Must already be less than 5 tags in the output, greater than/equal to 3 characters, and not be included already in the output
+            if(tagsArray.length <= 4 && document.getElementById("tags-input").value.length >= 3 && !tagsArray.includes(document.getElementById("tags-input").value)){
+                // Push new value to tags array in case of submission
+                tagsArray.push(newTagValue);
+                // console.log(tagsArray);
+
+                // Create a list element without the bullet,
+                // Insert a labeled button element with the text entry,
+                // Append to the ul output element
+                const newTag = document.createElement('li');
+                newTag.setAttribute("style", "list-style-type:none;");
+                const newTagButton = document.createElement('button');
+                newTagButton.textContent = newTagValue;
+                newTag.appendChild(newTagButton);
+                tagsOutput.appendChild(newTag);
+
+                // Each tag must have an event listener so that they can be removed
+                newTagButton.addEventListener('click', () => {
+                    // Get the index of the tag in the array (same as the output element)
+                    const positionOfTag = tagsArray.indexOf(newTagValue);
+                    if(positionOfTag !== -1){
+                        // Remove the tag from the output and splice the tag array to reflect the change
+                        tagsOutput.removeChild(newTag);
+                        tagsArray.splice(positionOfTag, 1);
+                        // console.log(tagsArray);
+                    }
+                });
+
+                // console.log(tagsOutput.children);
+            }else{
+                // If the entry is not valid for any reason,
+                // Propogate error and clear text box
+                document.getElementById("tag-error").removeAttribute("hidden");
+                setTimeout(() => {
+                    document.getElementById("tag-error").setAttribute("hidden", true);
+                }, 2000);
+            }
+            tagsInput.value = "";
+        }
+    });
+
     document.getElementById("listingForm").addEventListener("submit", async function(event) {
         event.preventDefault(); // Prevent default form submission
 
@@ -177,6 +226,19 @@
                 }
                 console.log("Image uploaded successfully"); // Debug image upload
             }
+
+            const tagPromises = tagsArray.map(tag => {
+                return fetch('http://127.0.0.1:8000/tags', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ listing_id: listingId, tag: tag })
+                });
+            });
+
+            await Promise.all(tagPromises);
+            console.log("Tags added successfully");
 
             // Set a success message
             await fetch('/set-flash-message', {

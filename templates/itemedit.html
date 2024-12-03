@@ -176,6 +176,18 @@
                     }
                     return response.json();
                 })
+                .then(() => {
+                    const tagPromises = tagsArray.map(tag => {
+                        return fetch('http://127.0.0.1:8000/tags', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ listing_id: "{{ item.id }}", tag: tag })
+                        });
+                    });
+                    return Promise.all(tagPromises);
+                })
                 .then(data => {
                     fetch('/set-flash-message', {
                         method: 'POST',

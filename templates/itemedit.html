@@ -22,7 +22,7 @@
                         <label for="tags-input">Tags:</label>
                         <input type="text" class="form-control" id="tags-input" name="tags-input" placeholder="Enter Up To 5 Tags:">
                         <output id="tag-error" name="tag-error" style="color: red;" hidden > Either the submitted tag was already used, it contained a ',' or you already reached the max 5</output>
-                        <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;" value="{{ item.tag }}"></ul>
+                        <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;" value="{{ item.tags }}"></ul>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Update Listing</button>
                 </form>
@@ -141,7 +141,7 @@
                     // Push new value to tags string with comma to separate entries
                     tagsArray += newTagValue;
                     tagsArray += ",";
-                    
+
                     // Create a list element without the bullet,
                     const newTag = document.createElement('li');
                     newTag.setAttribute("style", "list-style-type:none;");
@@ -222,6 +222,18 @@
                         return response.json().then(data => { throw new Error(data.detail) });
                     }
                     return response.json();
+                })
+                .then(() => {
+                    const tagPromises = tagsArray.split(',').map(tag => {
+                        return fetch('http://127.0.0.1:8000/tags', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ listing_id: "{{ item.id }}", tag: tag })
+                        });
+                    });
+                    return Promise.all(tagPromises);
                 })
                 .then(data => {
                     fetch('/set-flash-message', {

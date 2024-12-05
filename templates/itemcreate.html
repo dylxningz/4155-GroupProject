@@ -19,7 +19,7 @@
                         <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="Enter item price" required>
                     </div>
                     <div class="form-group">
-                        <label for="tags">Tags:</label>
+                        <label for="tags-input">Tags:</label>
                         <input type="text" class="form-control" id="tags-input" name="tags-input" placeholder="Enter Up To 5 Tags:">
                         <output id="tag-error" name="tag-error" style="color: red;" hidden > Either the submitted tag was already used or you already reached the max 5.</output>
                         <ul class="form-control" id="tags-output" style="display: flex; height: 50px; gap: 5px;"></ul>
@@ -245,6 +245,19 @@
                 }
                 console.log("Image uploaded successfully"); // Debug image upload
             }
+
+            const tagPromises = tagsArray.split(',').map(tag => {
+                return fetch('http://127.0.0.1:8000/tags', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ listing_id: listingId, tag: tag })
+                });
+            });
+
+            await Promise.all(tagPromises);
+            console.log("Tags added successfully");
 
             // Set a success message
             await fetch('/set-flash-message', {

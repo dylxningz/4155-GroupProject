@@ -92,7 +92,54 @@
     <script>
         const tagsInput = document.getElementById("tags-input");
         const tagsOutput = document.getElementById("tags-output");
-        const tagsArray = [];
+        const tagsArray = "";
+
+        let itemID = "{{ item.id }}"; // Assuming this comes from your template
+
+        // Convert to integer
+        itemID = parseInt(itemID, 10);
+        console.log(itemID);
+        const url = `http://127.0.0.1:8000/tags/tag/{listing_id}?id=${itemID}`;
+        console.log("Fetching URL:", url); // Debug the full URL
+
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                console.log("Response received");
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch tags: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(tags => {
+                tags.forEach(tag => {
+                    console.log("TRYING TAG");
+                    const newTag = document.createElement('li');
+                    newTag.setAttribute('style', 'list-style-type:none;');
+
+                    const newTagButton = document.createElement('button');
+                    console.log("About to set tag");
+                    newTagButton.textContent = tag.tag; // Adjust property based on your API response
+                    console.log("Tag Set");
+                    console.log(tag.tag);
+                    newTag.appendChild(newTagButton);
+
+                    tagsOutput.appendChild(newTag);
+
+                    newTagButton.addEventListener('click', () => {
+                        // Logic to remove the tag (optional, depends on your use case)
+                        tagsOutput.removeChild(newTag);
+                        console.log(`Tag removed: ${tag.name}`);
+                });
+            });
+        })
+        .catch(error => {
+            console.error(`Error fetching tags: ${error.message}`);
+        });
 
         
         // If the key pressed on the tags element was 'enter' (with other criteria met),

@@ -92,39 +92,65 @@
     <script>
         const tagsInput = document.getElementById("tags-input");
         const tagsOutput = document.getElementById("tags-output");
-        let tagsEdit = tagsOutput.value;
         let tagsArray = "";
-        
-        // Load the page with the tags from the database
-        window.onload = function loadTags(){
-            if(tagsEdit != null){
-                let tags = tagsEdit.split(',');
-                tags.forEach(entry => {
-                    // Create a list element without the bullet,
-                    const newTag = document.createElement('li');
-                    newTag.setAttribute("style", "list-style-type:none;");
-                    
-                    // Insert a labeled button element with the text entry,
-                    const newTagButton = document.createElement('button');
-                    newTagButton.textContent = entry;
-                    
-                    // Append to the ul output element
-                    newTag.appendChild(newTagButton);
-                    tagsOutput.appendChild(newTag);
-                    
-                    // Each tag must have an event listener so that they can be removed
-                    newTagButton.addEventListener('click', () => {
-                        // Get the index of the tag in the array (same as the output element)
-                        // Also removes tag from global string
-                        const positionOfTag = removeTag(newTagButton.textContent);
-                        
-                        // Remove the tag from the output and splice the tag array to reflect the change
-                        const tagToRemove = tagsOutput.children[positionOfTag];
-                        tagsOutput.removeChild(tagToRemove);
-                    });
-                });
+
+        let itemID = "{{ item.id }}"; // Assuming this comes from your template
+
+        // Convert to integer
+        itemID = parseInt(itemID, 10);
+        console.log(itemID);
+        const url = `http://127.0.0.1:8000/tags/tag/{listing_id}?id=${itemID}`;
+        console.log("Fetching URL:", url); // Debug the full URL
+
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
             }
-        }
+        })
+        .then(response => {
+            console.log("Response received");
+            if (!response.ok) {
+                throw new Error(`Failed to fetch tags: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(tags => {
+            let tagsList = [];
+            tags.forEach(tag => {
+                if(tag.tag != "" && tagsArray.split(",").length <= 5 && !tagsList.includes(tag.tag)){
+                    tagsList.push(tag.tag)
+                    const newTag = document.createElement('li');
+                    newTag.setAttribute('style', 'list-style-type:none;');
+    
+                    const newTagButton = document.createElement('button');
+                    newTagButton.textContent = tag.tag;
+                    tagsArray += tag.tag;
+                    tagsArray += ",";
+                    // console.log(tagsArray);
+                    // console.log("Tag Set");
+                    // console.log(tag.tag);
+                    newTag.appendChild(newTagButton);
+    
+                    tagsOutput.appendChild(newTag);
+    
+                    newTagButton.addEventListener('click', () => {
+                        const positionOfTag = removeTag(newTagButton.textContent);
+                    
+                        // Remove the tag from the output
+                        const tagToRemove = tagsOutput.children[positionOfTag];
+                        console.log("Removing tag" + newTagButton.textContent + "| tagsArray: " + tagsArray);
+                        tagsOutput.removeChild(tagToRemove);
+                        // tagsOutput.removeChild(newTag);
+                        // console.log(`Tag removed: ${tag.name}`);
+                    });   
+                }
+            });
+        })
+        .catch(error => {
+            console.error(`Error fetching tags: ${error.message}`);
+        });
+
         
         // If the key pressed on the tags element was 'enter' (with other criteria met),
         //      It should create a new tag div in the output box

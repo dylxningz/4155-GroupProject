@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <a href="/items" class="item-detail-back-link">
             <i class="fas fa-arrow-left"></i> Back to Items List
-        </a>     
+        </a>
         <div id="owner-actions" class="d-flex align-items-center hidden">
             <a href="#" id="edit-btn" class="btn btn-light mr-2">
                 <i class="fas fa-edit text-warning"></i>
@@ -46,6 +46,7 @@
 const itemId = window.location.pathname.split('/').pop();
 const userId = "{{ session['id'] }}";
 const favoriteBtn = document.getElementById('favorite-btn');
+const tagsOutput = document.getElementById('tags-output');
 
 function createImageElement(imgData) {
     const img = document.createElement('img');
@@ -181,7 +182,7 @@ function updateFavoriteButton(isFavorited) {
                     return ownerResponse.json();
                 })
                 .then(ownerData => {
-                   
+
                     document.getElementById('item-owner-name').textContent = ownerData.name;
                     document.getElementById('item-owner-name').dataset.ownerId = ownerData.id;
 
@@ -210,7 +211,43 @@ function updateFavoriteButton(isFavorited) {
                 });
             }
         })
-        .catch(error => console.error(error.message));
+
+
+        fetch(`http://127.0.0.1:8000/tags/tag/{listing_id}?id=${itemId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch tags: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(tags => {
+                let tagList = [];
+                tags.forEach(tag => {
+                    if(!tagList.includes(tag.tag) && tag.tag != "" && tagList.length < 5){
+                        console.log(tag);
+                        tagList.push(tag.tag);
+                        const tagElement = document.createElement('li'); // Create a list item
+                        tagElement.textContent = tag.tag; // Set the tag's text
+                        tagElement.style.listStyleType = 'none'; // Remove bullet points
+                        tagsOutput.appendChild(tagElement); // Append to the tags-output container
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching tags:', error);
+
+                // Display an error message in the tags-output container
+                const errorElement = document.createElement('li');
+                errorElement.textContent = 'Failed to load tags.';
+                errorElement.style.color = 'red';
+                errorElement.style.listStyleType = 'none';
+                tagsOutput.appendChild(errorElement);
+            });
 
     document.getElementById('delete-btn').addEventListener('click', function () {
         if (confirm('Are you sure you want to delete this item?')) {

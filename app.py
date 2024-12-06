@@ -287,11 +287,13 @@ def edit_item(item_id):
         title = request.form.get('title')
         description = request.form.get('description')
         price = request.form.get('price')
+        tags = request.form.get('tags')
 
         formData = {
             'title': title,
             'description': description,
-            'price': float(price)
+            'price': float(price),
+            'tags': tags
         }
 
         response = requests.put(f'http://127.0.0.1:8000/listings/{item_id}', json=formData)

@@ -119,7 +119,7 @@
             let newTagValue = document.getElementById("tags-input").value;
             
             // Must already be less than 5 tags in the output, greater than/equal to 3 characters, and not be included already in the output
-            if(tagsArray.split(',').length <= 4 && newTagValue.length >= 3 && !tagsArray.includes(newTagValue)){
+            if(tagsArray.split(',').length <= 5 && newTagValue.length >= 3 && !tagsArray.includes(newTagValue)){
                 // Push new value to tags string with comma to separate entries
                 tagsArray += newTagValue;
                 tagsArray += ",";

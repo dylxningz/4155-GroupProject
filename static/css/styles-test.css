@@ -620,3 +620,21 @@ footer {
     opacity: 0;
 }
 
+.item-detail-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;    
+    max-width: 400px;
+    height: auto;   
+    margin: 0 auto;
+    overflow: hidden; 
+    background-color: #f0f0f0;
+}
+
+.item-detail-image {
+    display: block; 
+    max-width: 100%;
+    height: auto;    
+    object-fit: cover;
+}

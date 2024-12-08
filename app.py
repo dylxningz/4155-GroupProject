@@ -74,8 +74,8 @@ def verify_email():
         )
 
         if response.status_code == 200:
-            flash('Email verified successfully!', 'success')
-            return redirect(url_for('login'))
+            flash('Email verified successfully! You can now log in.', 'success')
+            return redirect(url_for('login'))  # Redirect to login page
         else:
             try:
                 error_detail = response.json().get('detail', 'Unknown error')
@@ -140,6 +140,10 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
 
+        if not email or not password:
+            flash('Email and password are required.', 'danger')
+            return redirect(url_for('login'))
+
         try:
             response = requests.post('http://127.0.0.1:8000/accounts/login', data={
                 'username': email,
@@ -152,7 +156,8 @@ def login():
                 session['name'] = data['name']
                 session['id'] = data['id']
                 session['username'] = email.split('@')[0]
-                flash(f"Welcome {session['username']}, you have been successfully logged in.", "success")
+                session['just_logged_in'] = True
+                flash(f"Welcome {session['username']}! You have successfully logged in.", "success")
                 return redirect(url_for('dashboard'))
 
             elif response.status_code == 403:
@@ -170,7 +175,14 @@ def login():
             flash('An unexpected error occurred. Please try again later.', 'danger')
             return redirect(url_for('login'))
 
-    return render_template('login.html')
+    # Handle GET requests
+    try:
+        return render_template('login.html')
+    except Exception as e:
+        app.logger.error(f"Error rendering login.html: {str(e)}")
+        flash('An error occurred while loading the login page.', 'danger')
+        return redirect(url_for('index'))
+
 
 @app.route('/logout')
 def logout():
@@ -181,7 +193,10 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    messages = get_flashed_messages(with_categories=True)
+    # Check if the user just logged in
+    if session.pop('just_logged_in', False):  
+        flash('You have successfully logged in!', 'info')
+
     return render_template('dashboard.html', user_id=session.get('id'))
 
 @app.route('/settings', methods=['GET', 'POST'])

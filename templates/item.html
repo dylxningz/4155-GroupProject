@@ -66,15 +66,15 @@ async function fetchItemDetails() {
         document.getElementById('item-price-value').textContent = itemData.price;
 
         const listingOwnerId = itemData.user_id;
-        fetchOwnerDetails(listingOwnerId);
+        await fetchOwnerDetails(listingOwnerId);
 
-        fetchItemImages();
-        checkFavoriteStatus();
+        // Fetch images once
+        await fetchItemImages();
+        await checkFavoriteStatus();
     } catch (error) {
         console.error('Error fetching item details:', error);
     }
 }
-
 async function fetchOwnerDetails(listingOwnerId) {
     try {
         document.getElementById('owner-actions').style.display = 'none';
@@ -122,15 +122,15 @@ async function fetchItemImages() {
         const imagesData = await response.json();
         const imageContainer = document.querySelector('.item-detail-image-container');
 
+        // Ensure the container is empty before adding images
         imageContainer.innerHTML = '';
 
         if (imagesData.length === 0) {
             imageContainer.textContent = 'No images available for this item.';
         } else {
-            imagesData.forEach(image => {
-                const imgElement = createImageElement(image.img_data);
-                imageContainer.appendChild(imgElement);
-            });
+            // Append only the first image
+            const imgElement = createImageElement(imagesData[0].img_data);
+            imageContainer.appendChild(imgElement);
         }
     } catch (error) {
         console.error('Error fetching item images:', error);

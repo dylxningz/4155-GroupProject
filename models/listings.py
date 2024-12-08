@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from dependencies.database import Base
 
@@ -8,7 +8,7 @@ class Listing(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))  # Ensure user cascade if needed
     title = Column(String(150), nullable=False)
-    description = Column(String(150), nullable=False)
+    description = Column(Text, nullable=False)
     price = Column(Float, nullable=False)
 
     account = relationship("Account", back_populates="listings")

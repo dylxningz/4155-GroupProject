@@ -39,6 +39,9 @@ async function fetchConversations() {
         if (!convResponse.ok) throw new Error('Failed to fetch conversations.');
         const conversations = await convResponse.json();
 
+        // Sort conversations by `created_at` in descending order
+        conversations.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
         const conversationHTML = await Promise.all(conversations.map(async (conv) => {
             const participant1Resp = await fetch(`http://127.0.0.1:8000/accounts/${conv.participant_1}`);
             const participant2Resp = await fetch(`http://127.0.0.1:8000/accounts/${conv.participant_2}`);

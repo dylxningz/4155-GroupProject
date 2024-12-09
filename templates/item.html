@@ -250,25 +250,6 @@ function updateFavoriteButton(isFavorited) {
                 tagsOutput.appendChild(errorElement);
             });
 
-    document.getElementById('delete-btn').addEventListener('click', function () {
-        if (confirm('Are you sure you want to delete this item?')) {
-            fetch(`http://127.0.0.1:8000/listings/${itemId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => {
-                    if (response.ok) {
-                        alert('Item deleted successfully');
-                        window.location.href = '/items';
-                    } else {
-                        alert('Error deleting item');
-                    }
-                })
-                .catch(error => console.error('Error deleting item:', error));
-        }
-    });
 
     const messageSellerButton = document.getElementById('message-seller-btn');
 

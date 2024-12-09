@@ -173,72 +173,79 @@
         }
     
         async function fetchAndDisplayItems(query = {}, itemsList) {
-    try {
-        const params = new URLSearchParams(query).toString();
-        const response = await fetch(`http://127.0.0.1:8000/listings?${params}`);
-        if (!response.ok) throw new Error(`Failed to fetch items: ${response.statusText}`);
-        const data = await response.json();
-
-        // Sort items by date (assuming 'created_at' exists and is ISO 8601)
-        const sortedData = data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-        itemsList.innerHTML = ""; // Clear existing items
-        if (sortedData.length === 0) {
-            itemsList.innerHTML = "<p class='text-warning'>No items found.</p>";
-            return;
-        }
-
-        for (const item of sortedData) {
-            const imagesData = await fetchItemImages(item.id);
-            const imageElement = imagesData.length > 0 ? createImageElement(imagesData[0].img_data) : null;
-            const itemCard = createItemCard(item, imageElement);
-            itemsList.appendChild(itemCard);
-        }
-    } catch (error) {
-        console.error('Error fetching or displaying items:', error);
-        itemsList.innerHTML = "<p class='text-danger'>No items match your search request!.</p>";
-    }
-}
+            try {
+                const params = new URLSearchParams(query).toString();
+                const response = await fetch(`http://127.0.0.1:8000/listings?${params}`);
+                if (!response.ok) throw new Error(`Failed to fetch items: ${response.statusText}`);
+                const data = await response.json();
     
-async function fetchAndDisplayTags(tagsList, itemsList) {
-    try {
-        const response = await fetch('http://127.0.0.1:8000/tags'); // Ensure the backend provides tag data
-        if (!response.ok) throw new Error("Failed to fetch tags.");
-        const tags = await response.json();
-
-        // Add tag count to each tag object and exclude empty tags
-        const tagCounts = {};
-        tags.forEach(tag => {
-            if (tag.tag && tag.tag.trim() !== "") { // Exclude empty or null tags
-                if (tagCounts[tag.tag]) {
-                    tagCounts[tag.tag]++;
-                } else {
-                    tagCounts[tag.tag] = 1;
+               
+                const sortedData = data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    
+                itemsList.innerHTML = ""; 
+                if (sortedData.length === 0) {
+                    itemsList.innerHTML = "<p class='text-warning'>No items found.</p>";
+                    return;
                 }
+    
+                for (const item of sortedData) {
+                    const imagesData = await fetchItemImages(item.id);
+                    const imageElement = imagesData.length > 0 ? createImageElement(imagesData[0].img_data) : null;
+                    const itemCard = createItemCard(item, imageElement);
+                    itemsList.appendChild(itemCard);
+                }
+            } catch (error) {
+                console.error('Error fetching or displaying items:', error);
+                itemsList.innerHTML = "<p class='text-danger'>No items match your search request!.</p>";
             }
-        });
-
-        const sortedTags = Object.entries(tagCounts)
-            .sort((a, b) => b[1] - a[1]) // Sort by count descending
-            .map(([tag, count]) => ({ tag, count }));
-
-        tagsList.innerHTML = ""; // Clear existing tags
-
-        sortedTags.forEach(tagObj => {
-            const { tag, count } = tagObj;
-            const tagItem = document.createElement("li");
-            tagItem.textContent = `${tag} (${count})`;
-            tagItem.classList.add("tag-item");
-            tagItem.style.cursor = "pointer";
-            tagItem.addEventListener("click", () => {
-                fetchAndDisplayItems({ tag }, itemsList);
-            });
-            tagsList.appendChild(tagItem);
-        });
-    } catch (error) {
-        console.error("Error fetching tags:", error);
-    }
-}
+        }
+    
+        async function fetchAndDisplayTags(tagsList, itemsList) {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/tags');
+                if (!response.ok) throw new Error("Failed to fetch tags.");
+                const tags = await response.json();
+    
+       
+                const tagCounts = {};
+                tags.forEach(tag => {
+                    if (tag.tag && tag.tag.trim() !== "") {
+                        if (tagCounts[tag.tag]) {
+                            tagCounts[tag.tag]++;
+                        } else {
+                            tagCounts[tag.tag] = 1;
+                        }
+                    }
+                });
+    
+                const sortedTags = Object.entries(tagCounts)
+                    .sort((a, b) => b[1] - a[1]) 
+                    .map(([tag, count]) => ({ tag, count }));
+    
+                tagsList.innerHTML = ""; 
+    
+                sortedTags.forEach(tagObj => {
+                    const { tag, count } = tagObj;
+                    const tagItem = document.createElement("li");
+                    tagItem.textContent = `${tag} (${count})`;
+                    tagItem.classList.add("tag-item");
+                    tagItem.style.cursor = "pointer";
+                    tagItem.addEventListener("click", () => {
+                        const searchValue = document.getElementById("new-item-search-by-name").value.trim();
+                        const maxPriceValue = document.getElementById("new-price-range-slider").value;
+    
+                        const query = { tag };
+                        if (searchValue) query.search = searchValue;
+                        if (maxPriceValue) query.max_price = maxPriceValue;
+    
+                        fetchAndDisplayItems(query, itemsList);
+                    });
+                    tagsList.appendChild(tagItem);
+                });
+            } catch (error) {
+                console.error("Error fetching tags:", error);
+            }
+        }
     
         document.addEventListener('DOMContentLoaded', () => {
     const itemsList = document.getElementById('items-list');
@@ -247,29 +254,37 @@ async function fetchAndDisplayTags(tagsList, itemsList) {
     const priceRangeMax = document.getElementById("new-price-range-max");
     const searchInput = document.getElementById("new-item-search-by-name");
     const resetIcon = document.getElementById("RESET-FILTER-ICON");
+    const applyFiltersButton = document.getElementById("NEW-ITEM-SEARCH-FILTER-BUTTON");
 
-    // Update price range labels dynamically
+
     priceRangeSlider.addEventListener("input", () => {
         priceRangeMax.textContent = `$${priceRangeSlider.value}`;
     });
 
-    // Reset filters
+    applyFiltersButton.addEventListener("click", () => {
+        const searchValue = searchInput.value.trim().toLowerCase();
+        const maxPriceValue = priceRangeSlider.value;
+
+        const query = {};
+        if (searchValue) query.search = searchValue;
+        if (maxPriceValue) query.max_price = maxPriceValue;
+
+        fetchAndDisplayItems(query, itemsList);
+    });
+
     resetIcon.addEventListener("click", () => {
-        // Clear input fields and reset price range
         searchInput.value = '';
         priceRangeSlider.value = 500;
         priceRangeMax.textContent = '$500';
 
-        // Fetch all items to reset the page
         fetchAndDisplayItems({}, itemsList);
     });
 
-    // Fetch and display tags in the sidebar
     fetchAndDisplayTags(tagsList, itemsList);
 
-    // Initial fetch to display items
     fetchAndDisplayItems({}, itemsList);
 });
     </script>
+    
 </body>
 </html>

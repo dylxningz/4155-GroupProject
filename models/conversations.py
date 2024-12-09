@@ -10,16 +10,17 @@ class Conversation(Base):
     participant_1 = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
     participant_2 = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
     item_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False)
-  # Add ondelete="CASCADE"
     created_at = Column(DateTime, default=datetime.utcnow)
 
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
+
+
 class Message(Base):
     __tablename__ = 'messages'
 
     id = Column(Integer, primary_key=True, index=True)
-    conversation_id = Column(Integer, ForeignKey("conversations.id"))
-    sender_id = Column(Integer, ForeignKey("accounts.id"))
+    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"))
+    sender_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
     message_body = Column(String(1000))
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

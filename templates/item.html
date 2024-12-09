@@ -71,6 +71,7 @@ async function fetchItemDetails() {
         // Fetch images once
         await fetchItemImages();
         await checkFavoriteStatus();
+        await fetchTags();
     } catch (error) {
         console.error('Error fetching item details:', error);
     }

@@ -14,4 +14,4 @@ class Listing(Base):
     account = relationship("Account", back_populates="listings")
     images = relationship("Image", back_populates="listing", cascade="all, delete-orphan")
     favorited_by = relationship("Favorite", back_populates="item", cascade="all, delete-orphan")
-    tags = relationship("Tag", back_populates="listing")
+    tags = relationship("Tag", back_populates="listing", cascade="all, delete-orphan")

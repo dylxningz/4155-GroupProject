@@ -137,16 +137,33 @@ def get_account_by_email(db: Session, item_email: str):
 
 def update(db: Session, item_id, request):
     try:
-        item = db.query(model.Account).filter(model.Account.id == item_id)
-        if not item.first():
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
+        item_query = db.query(model.Account).filter(model.Account.id == item_id)
+        item = item_query.first()
+        if not item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Id not found!"
+            )
+        
+        
         update_data = request.dict(exclude_unset=True)
-        item.update(update_data, synchronize_session=False)
+        if "email" in update_data:
+            del update_data["email"]  
+
+        for key, value in update_data.items():
+            setattr(item, key, value)
+
         db.commit()
+        db.refresh(item) 
     except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    return item.first()
+        db.rollback()  
+        error = str(e.__dict__.get('orig', str(e)))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error
+        )
+    return item
+
 
 
 def delete(db: Session, item_id: int):

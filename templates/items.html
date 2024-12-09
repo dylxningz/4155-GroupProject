@@ -1,132 +1,275 @@
-{% extends 'base.html' %}
-{% block title %}Items List{% endblock %}
-{% block content %}
-<div class="container mt-5">
-    <h1 class="text-center item-list-title">Items List</h1>
-
-    <details>
-        <summary>Search Filters</summary>
-        <div class="items-search-filters">
-            <div class="item-name">
-                <label for="item-search-by-name">Item Name:</label>
-                <input type="search" placeholder="ex. &#34;Calculator&#34;, &#34;Xbox One Controller&#34;" name="item-name" id="item-search-by-name">
-            </div>
-            <div class="price-range">
-                <label for="item-search-by-price-range">Price Range: $0 - $<input type="number" for="item-search-by-price-range" id="item-price-range-max" min="0" max="501"></input></label>
-            </div>
-            <div class="submit-filter">
-                <button type="submit" id="ITEM-SEARCH-FILTER-BUTTON">Submit</button>
-            </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Items List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles-test.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <a class="navbar-brand" href="/">NinerBuys</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/items">Shop</a>
+                </li>
+                {% if session['email'] %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/conversations">Messages</a>
+                </li>                               
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">Logout</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">{{ session['username'] }}</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/signup">Signup</a>
+                </li>
+                {% endif %}
+            </ul>
         </div>
-    </details>
+    </nav>
 
-    <br>
-    <div id="items-list" class="custom-grid"></div>
-</div>
+    <!-- Flash Messages -->
+    <div class="flash-message-container">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
 
-<script>
-    function createImageElement(imgData) {
-        if (!imgData) {
-            console.warn("Image data is empty or undefined.");
-            return null;
+    <!-- Main Content -->
+    <div class="items-page">
+        <div class="new-layout">
+            <!-- Filters Section -->
+            <aside class="new-filters-section p-3 bg-light">
+                <h4 class="mb-3 d-flex justify-content-between align-items-center">
+                    <span>Search Filters</span>
+                    <i id="RESET-FILTER-ICON" class="fas fa-sync-alt refresh-icon" style="cursor: pointer;" title="Reset Filters"></i>
+                </h4>
+                <div class="new-items-search-filters">
+                    <!-- Existing search filters -->
+                    <div class="form-group">
+                        <label for="new-item-search-by-name">Item Name:</label>
+                        <input type="search" class="form-control" placeholder="e.g., Calculator, Xbox" id="new-item-search-by-name">
+                    </div>
+                    <div class="form-group mt-4">
+                        <label>Price Range:</label>
+                        <div class="d-flex align-items-center">
+                            <span id="new-price-range-min" class="mr-2">$0</span>
+                            <input type="range" class="form-range" id="new-price-range-slider" min="0" max="500" step="1">
+                            <span id="new-price-range-max" class="ml-2">$500</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary mt-4 w-100" id="NEW-ITEM-SEARCH-FILTER-BUTTON">Apply Filters</button>
+                </div>
+            
+                <!-- Tags Section -->
+                <div class="tags-section mt-5">
+                    <h5>Tags</h5>
+                    <ul id="tags-list" class="list-unstyled"></ul>
+                </div>
+            </aside>
+
+            <!-- Main Items Section -->
+            <main class="new-items-main">
+                <div class="container ignore-margin">
+                    <h1 class="text-center item-list-title">Listed Items</h1>
+                    <div id="items-list" class="new-custom-grid"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer py-4 text-center">
+        <p>&copy; 2024 NinerBuys. All rights reserved.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Adjust Footer
+        function adjustFooter() {
+            const footer = document.querySelector('footer');
+            const contentHeight = document.body.offsetHeight;
+            const viewportHeight = window.innerHeight;
+    
+            if (contentHeight < viewportHeight) {
+                footer.classList.add('sticky-footer');
+            } else {
+                footer.classList.remove('sticky-footer');
+            }
         }
-        const imgSrc = imgData.startsWith("data:image/") ? imgData : `data:image/jpeg;base64,${imgData}`;
-        const img = document.createElement('img');
-        img.src = imgSrc;
-        img.alt = 'Item Image';
-        img.classList.add('item-image');
-        return img;
+    
+        window.addEventListener('load', adjustFooter);
+        window.addEventListener('resize', adjustFooter);
+    
+        function createImageElement(imgData) {
+            if (!imgData) {
+                console.warn("Image data is empty or undefined.");
+                return null;
+            }
+            const imgSrc = imgData.startsWith("data:image/") ? imgData : `data:image/jpeg;base64,${imgData}`;
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.alt = 'Item Image';
+            img.classList.add('item-image');
+            return img;
+        }
+    
+        async function fetchItemImages(itemId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/images/listing/${itemId}`);
+                if (!response.ok) {
+                    console.warn(`Failed to fetch images for listing ID: ${itemId} - Status: ${response.status}`);
+                    return [];
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching images for item ID ${itemId}:`, error);
+                return [];
+            }
+        }
+    
+        function createItemCard(item, imageElement) {
+            const itemDiv = document.createElement('div');
+            itemDiv.innerHTML = `
+                <div class="card item-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${item.title}</h5>
+                        ${imageElement ? imageElement.outerHTML : '<p>No Image Available</p>'}
+                        <p class="card-text">$${item.price}</p>
+                        <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            `;
+            return itemDiv;
+        }
+    
+        async function fetchAndDisplayItems(query = {}, itemsList) {
+    try {
+        const params = new URLSearchParams(query).toString();
+        const response = await fetch(`http://127.0.0.1:8000/listings?${params}`);
+        if (!response.ok) throw new Error(`Failed to fetch items: ${response.statusText}`);
+        const data = await response.json();
+
+        // Sort items by date (assuming 'created_at' exists and is ISO 8601)
+        const sortedData = data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        itemsList.innerHTML = ""; // Clear existing items
+        if (sortedData.length === 0) {
+            itemsList.innerHTML = "<p class='text-warning'>No items found.</p>";
+            return;
+        }
+
+        for (const item of sortedData) {
+            const imagesData = await fetchItemImages(item.id);
+            const imageElement = imagesData.length > 0 ? createImageElement(imagesData[0].img_data) : null;
+            const itemCard = createItemCard(item, imageElement);
+            itemsList.appendChild(itemCard);
+        }
+    } catch (error) {
+        console.error('Error fetching or displaying items:', error);
+        itemsList.innerHTML = "<p class='text-danger'>No items match your search request!.</p>";
     }
+}
+    
+async function fetchAndDisplayTags(tagsList, itemsList) {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/tags'); // Ensure the backend provides tag data
+        if (!response.ok) throw new Error("Failed to fetch tags.");
+        const tags = await response.json();
 
-    fetch('http://127.0.0.1:8000/listings')
-        .then(response => response.json())
-        .then(data => {
-            const itemsList = document.getElementById('items-list');
-            data.forEach(item => {
-                const itemDiv = document.createElement('div');
-                fetch(`http://127.0.0.1:8000/images/listing/${item.id}`)
-                    .then(async (imagesResponse) => {
-                        if (!imagesResponse.ok) {
-                            console.warn(`Failed to fetch images for listing ID: ${item.id} - Status: ${imagesResponse.status}`);
-                            return [];
-                        }
-                        const contentType = imagesResponse.headers.get("Content-Type") || "";
-                        if (!contentType.includes("application/json")) {
-                            console.error(`Unexpected response type for listing ID: ${item.id}`);
-                            return [];
-                        }
-                        return await imagesResponse.json();
-                    })
-                    .then(imagesData => {
-                        const imageElement = imagesData.length > 0 ? createImageElement(imagesData[0].img_data) : null;
-                        itemDiv.innerHTML = `
-                            <div class="card item-card">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">${item.title}</h5>
-                                    ${imageElement ? imageElement.outerHTML : '<p>No Image Available</p>'}
-                                    <p class="card-text">$${item.price}</p>
-                                    <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
-                                </div>
-                            </div>
-                        `;
-                        itemsList.appendChild(itemDiv);
-                    })
-                    .catch(error => {
-                        console.error(`Error fetching or rendering image for item ${item.id}:`, error);
-                        itemDiv.innerHTML = `
-                            <div class="card item-card">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">${item.title}</h5>
-                                    <p>No Image Available</p>
-                                    <p class="card-text">$${item.price}</p>
-                                    <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
-                                </div>
-                            </div>
-                        `;
-                        itemsList.appendChild(itemDiv);
-                    });
+        // Add tag count to each tag object and exclude empty tags
+        const tagCounts = {};
+        tags.forEach(tag => {
+            if (tag.tag && tag.tag.trim() !== "") { // Exclude empty or null tags
+                if (tagCounts[tag.tag]) {
+                    tagCounts[tag.tag]++;
+                } else {
+                    tagCounts[tag.tag] = 1;
+                }
+            }
+        });
+
+        const sortedTags = Object.entries(tagCounts)
+            .sort((a, b) => b[1] - a[1]) // Sort by count descending
+            .map(([tag, count]) => ({ tag, count }));
+
+        tagsList.innerHTML = ""; // Clear existing tags
+
+        sortedTags.forEach(tagObj => {
+            const { tag, count } = tagObj;
+            const tagItem = document.createElement("li");
+            tagItem.textContent = `${tag} (${count})`;
+            tagItem.classList.add("tag-item");
+            tagItem.style.cursor = "pointer";
+            tagItem.addEventListener("click", () => {
+                fetchAndDisplayItems({ tag }, itemsList);
             });
-        })
-        .catch(error => console.error('Error fetching items:', error));
+            tagsList.appendChild(tagItem);
+        });
+    } catch (error) {
+        console.error("Error fetching tags:", error);
+    }
+}
+    
+        document.addEventListener('DOMContentLoaded', () => {
+    const itemsList = document.getElementById('items-list');
+    const tagsList = document.getElementById('tags-list');
+    const priceRangeSlider = document.getElementById("new-price-range-slider");
+    const priceRangeMax = document.getElementById("new-price-range-max");
+    const searchInput = document.getElementById("new-item-search-by-name");
+    const resetIcon = document.getElementById("RESET-FILTER-ICON");
 
-        
-        
-    const rangeMax = document.querySelector("#item-price-range-max");
-    const submitButton = document.getElementById("ITEM-SEARCH-FILTER-BUTTON");
-    submitButton.addEventListener("click", () => {
-        const itemString = document.getElementById("item-search-by-name").value.toLowerCase();
-        const itemsList = document.getElementById('items-list');
-
-        fetch('http://127.0.0.1:8000/listings')
-            .then(response => response.json())
-            .then(data => {
-                itemsList.innerHTML = "";
-                data.forEach(item => {
-                    if ((item.title.toLowerCase().includes(itemString)) && item.price <= rangeMax.value) {
-                        const itemDiv = document.createElement('div');
-                        fetch(`http://127.0.0.1:8000/images/listing/${item.id}`)
-                            .then(imagesResponse => imagesResponse.json())
-                            .then(imagesData => {
-                                const imageElement = imagesData.length > 0 ? createImageElement(imagesData[0].img_data) : null;
-                                itemDiv.innerHTML = `
-                                    <div class="card item-card">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title">${item.title}</h5>
-                                            ${imageElement ? imageElement.outerHTML : '<p>No Image Available</p>'}
-                                            <p class="card-text">$${item.price}</p>
-                                            <a href="/item/${item.id}" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                `;
-                                itemsList.appendChild(itemDiv);
-                            })
-                            .catch(error => {
-                                console.error('Error fetching item images:', error);
-                            });
-                    }
-                });
-            });
+    // Update price range labels dynamically
+    priceRangeSlider.addEventListener("input", () => {
+        priceRangeMax.textContent = `$${priceRangeSlider.value}`;
     });
-</script>
 
-{% endblock %}
+    // Reset filters
+    resetIcon.addEventListener("click", () => {
+        // Clear input fields and reset price range
+        searchInput.value = '';
+        priceRangeSlider.value = 500;
+        priceRangeMax.textContent = '$500';
+
+        // Fetch all items to reset the page
+        fetchAndDisplayItems({}, itemsList);
+    });
+
+    // Fetch and display tags in the sidebar
+    fetchAndDisplayTags(tagsList, itemsList);
+
+    // Initial fetch to display items
+    fetchAndDisplayItems({}, itemsList);
+});
+    </script>
+</body>
+</html>

@@ -211,21 +211,20 @@ def update_profile():
 
     user_id = session['id']
     name = request.form.get('name')
-    email = request.form.get('email')
 
     response = requests.put(f'http://127.0.0.1:8000/accounts/{user_id}', json={
-        'name': name,
-        'email': email
+        'name': name
     })
 
     if response.status_code == 200:
         flash('Profile updated successfully!', 'success')
-        session['name'] = name
-        session['email'] = email
+        session['name'] = name  # Update session with the new name
     else:
         flash('Error updating profile. Please try again.', 'danger')
 
     return redirect(url_for('settings'))
+
+
 
 @app.route('/change-password', methods=['POST'])
 def change_password():

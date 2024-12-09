@@ -11,6 +11,7 @@ https://youtu.be/_2148i91dNo
 
 To run our website complete the following task
 
+On windows computer 
 Install Visual Studio Code and make sure in the extensions within visual studio code to install Python
 
 https://code.visualstudio.com/download

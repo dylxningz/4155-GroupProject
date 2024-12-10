@@ -1,47 +1,87 @@
-ITIS-4155 Team 7
+# **NinerBuys**  
+**Team 7: Dylan, Henry, Somot, Jack**  
+A secure second-hand marketplace tailored for the University of North Carolina at Charlotte (UNCC) community.
 
-NinerBuys - Dylan, Henry, Somot, Jack
+---
 
-A web application developed in python and flask library. 
-We aim to create a safe second hand selling platorm for UNCC. 
+## **About**  
+NinerBuys is a web application developed using **Python** and the **Flask framework**. Our platform provides a safe and reliable environment for UNCC students to buy and sell second-hand items.
 
-Youtube video for troubleshooting if you cannot get it to work!!!
-https://youtu.be/_2148i91dNo
+---
 
+## **Features**  
+- User-friendly interface for posting and browsing listings.  
+- Secure sign-up process restricted to UNCC students.  
+- Integrated messaging system for seamless communication.  
+- FastAPI backend for robust and scalable API endpoints.
 
-To run our website complete the following task
+---
 
-On windows computer 
-Install Visual Studio Code and make sure in the extensions within visual studio code to install Python
+## **Installation and Setup**
 
-https://code.visualstudio.com/download
+### **Prerequisites**
+1. **Visual Studio Code**  
+   - [Download Visual Studio Code](https://code.visualstudio.com/download)  
+   - Install the **Python extension** in Visual Studio Code.
 
-Download the python library and install
-IMPORTANT!!! Make sure you check the box near the bottom that sets python as a PATH
-https://www.python.org/downloads/
+2. **Python**  
+   - [Download Python](https://www.python.org/downloads/)  
+   - During installation, **check the box to add Python to PATH**.
 
-Download the Zipped repo and unzip it somewhere on your pc as you will access this with visual studio code.
-https://github.com/dylxningz/4155-GroupProject
+---
 
-Once in the terminal within Visual studio code after python has been downloaded and installed please run these commands 
+### **Steps to Run the Application**
+1. **Clone or Download the Repository**
+   - Clone the repository using Git:  
+     ```bash
+     git clone https://github.com/dylxningz/4155-GroupProject.git
+     ```  
+   - Or download the ZIP file from [GitHub](https://github.com/dylxningz/4155-GroupProject), and unzip it to a folder on your PC.
 
-python -m venv venv
+2. **Set Up Virtual Environment**  
+   Navigate to the project folder in Visual Studio Code. In the terminal, run:  
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate
+   
+3. **Install Dependencies**  
+Install the required Python libraries from the `requirements.txt` file:  
 
-venv\Scripts\activate
-
+```bash
 pip install -r requirements.txt
+```
 
-Then if all is successful run the final command 
+---
 
+4. **Run the Application**  
+Start the Flask application with:  
+
+```bash
 python app.py
+```
 
-After these steps you should see in the terminal the website configuration being set and the database being loaded.
+---
 
-To access the website go to your browser and go to 
+5. **Access the Application**  
+Open your browser and navigate to the **NinerBuys website**:  
+[http://localhost:5000](http://localhost:5000)  
+To view the **API documentation**, go to:  
+[http://localhost:8000/docs](http://localhost:8000/docs)
 
-localhost:5000
+---
 
-To access the FastAPI routes to just see what we used go to 
+**Troubleshooting**  
+If you encounter any issues during installation or setup, refer to our [troubleshooting video](https://youtu.be/_2148i91dNo) for a step-by-step guide.
 
-localhost:8000/docs
+---
 
+**Group Members**  
+- **Dylan**  
+- **Henry**  
+- **Somot**  
+- **Jack**
+
+---
+
+**Thank You!**  
+We appreciate you using NinerBuys, your secure second-hand marketplace. 😄
